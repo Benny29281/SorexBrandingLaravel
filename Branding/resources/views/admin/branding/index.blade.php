@@ -262,7 +262,7 @@
 
                                 {{-- 2. FOTO SUGEST DESIGN --}}
                                 <div>
-                                    <p class="text-xs text-gray-500 font-bold uppercase mb-2">Foto Sugest Design</p>
+                                    <p class="text-xs text-gray-500 font-bold uppercase mb-2">Foto Referensi Design</p>
                                     <div class="flex flex-wrap gap-2">
                                         {{-- Loop Foto Sugest --}}
                                         <template x-for="img in (detailItem.photo_sugest_design ? JSON.parse(detailItem.photo_sugest_design) : [])">
@@ -272,7 +272,7 @@
                                             </a>
                                         </template>
                                         {{-- Pesan Jika Kosong --}}
-                                        <span x-show="!detailItem.photo_sugest_design || JSON.parse(detailItem.photo_sugest_design).length === 0" class="text-xs text-gray-400 italic py-2">Tidak ada foto sugest.</span>
+                                        <span x-show="!detailItem.photo_sugest_design || JSON.parse(detailItem.photo_sugest_design).length === 0" class="text-xs text-gray-400 italic py-2">Tidak Ada Foto Referensi.</span>
                                     </div>
                                 </div>
                             </div>
@@ -287,5 +287,7 @@
 
         </main>
     </div>
+
+    @include('components.keep-alive')
 </body>
 </html>

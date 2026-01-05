@@ -10,7 +10,7 @@
                 <th class="py-3 px-6 text-left border-b border-gray-700">Brand</th>
                 <th class="py-3 px-6 text-left border-b border-gray-700">Tools</th>
                 <th class="py-3 px-6 text-center border-b border-gray-700">Qty</th>
-                <th class="py-3 px-6 text-center border-b border-gray-700">Aksi</th>
+                <th class="py-3 px-6 text-center border-b border-gray-700">Actions</th>
             </tr>
         </thead>
         

@@ -262,5 +262,7 @@
 
         </main>
     </div>
+
+    @include('components.keep-alive')
 </body>
 </html>

@@ -161,9 +161,9 @@
                 <button type="submit" class="btn-login">Login</button>
             </form>
 
-            <a href="{{ route('register') }}" class="btn-register-block">
+            {{-- <a href="{{ route('register') }}" class="btn-register-block">
                 Belum punya akun? Daftar di sini
-            </a>
+            </a> --}}
 
         </div>
     </div>

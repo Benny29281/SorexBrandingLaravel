@@ -159,5 +159,6 @@ new Chart(donutCtx, {
 });
 </script>
 
+@include('components.keep-alive')
 </body>
 </html>

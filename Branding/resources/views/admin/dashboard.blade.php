@@ -325,5 +325,6 @@
         });
     </script>
 
+    @include('components.keep-alive')
 </body>
 </html>

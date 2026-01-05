@@ -81,13 +81,14 @@
         @if (Route::has('login'))
             <div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 animate-enter delay-300">
                 @auth
-                    <a href="{{ url('/dashboard') }}" class="group relative px-8 py-3 bg-white text-[#d71920] font-bold rounded-full shadow-lg overflow-hidden w-64 transition-all hover:scale-105">
-                        <span class="relative z-10">MASUK DASHBOARD <i class="fas fa-arrow-right ml-2"></i></span>
+                    <a href="{{ url('login') }}" class="group relative px-8 py-3 bg-white text-[#d71920] font-bold rounded-full shadow-lg overflow-hidden w-64 transition-all hover:scale-105">
+                        <span class="relative z-10">LOG IN <i class="fas fa-arrow-right ml-2"></i></span>
                     </a>
                 @else
                     <a href="{{ route('login') }}" class="group px-10 py-3 bg-white text-[#d71920] font-bold rounded-full shadow-xl hover:bg-gray-50 hover:scale-105 transition transform duration-300 w-64 flex items-center justify-center">
                         <i class="fas fa-sign-in-alt mr-2"></i> LOG IN
                     </a>
+
 
                     {{-- @if (Route::has('register'))
                         <a href="{{ route('register') }}" class="px-10 py-3 bg-transparent border-2 border-white text-white font-bold rounded-full hover:bg-white/10 hover:scale-105 transition transform duration-300 w-64 flex items-center justify-center">

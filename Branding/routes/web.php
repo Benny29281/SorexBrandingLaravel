@@ -2,20 +2,16 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-
-// --- 1. Panggil Controller Admin Dashboard (PENTING!) ---
 use App\Http\Controllers\Admin\DashboardController;
-
-// --- 2. Panggil Controller Upload ---
 use App\Http\Controllers\BrandingRequestController;
 use App\Http\Controllers\BrandingRequest2Controller;
-
-use App\Http\Controllers\Admin\UserController; // Pastikan controller di-use
-
+use App\Http\Controllers\Admin\UserController; 
 use App\Http\Controllers\BrandingStatusController;
 use App\Http\Controllers\Admin\ReportController;
-
 use App\Http\Controllers\UserRequestController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\User\HomeController;
+
 
 
 
@@ -206,3 +202,29 @@ Route::post('/request/revisi/check', [UserRequestController::class, 'checkRevisi
 
 // Proses Simpan Perubahan (PUT/POST)
 Route::put('/request/revisi/update', [UserRequestController::class, 'updateRevisi'])->name('user.request.update');
+
+Route::get('/user/log-aktivitas', [UserRequestController::class, 'historyLog'])->name('user.log');
+
+// Route untuk Notifikasi
+Route::get('/notification/read/{id}', [NotificationController::class, 'markAsRead'])->name('notification.read');
+Route::get('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notification.read.all');
+Route::get('/notifications/all', [NotificationController::class, 'index'])->name('notification.index');
+
+
+// Pastikan ada di dalam group User + Auth
+Route::prefix('user')->middleware(['auth'])->group(function () {
+    
+    Route::get('/home', [HomeController::class, 'index'])->name('user.home');
+
+     Route::get('/pusat-download', [HomeController::class, 'viewDownloadPage'])->name('user.download.page');
+    
+    // INI ROUTE DOWNLOADNYA (WAJIB GET)
+    Route::get('/download-status', [HomeController::class, 'downloadStatus'])->name('user.download.status');
+
+});
+
+Route::post('/user/profile/upload', [App\Http\Controllers\UserRequestController::class, 'uploadPhoto'])->name('user.profile.upload');
+
+Route::get('/refresh-csrf', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->name('refresh.csrf');

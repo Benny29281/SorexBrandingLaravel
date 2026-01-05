@@ -42,7 +42,7 @@ class BrandingStatusController extends Controller
         }
         
         $data1_proses = $q1_proses->latest()
-                                  ->paginate(10, ['*'], 'p1_pro')
+                                  ->paginate(100, ['*'], 'p1_pro')
                                   ->appends($request->all());
 
         // ---------------- [B] REGIONAL 1 - SELESAI ----------------
@@ -64,7 +64,7 @@ class BrandingStatusController extends Controller
         }
 
         $data1_selesai = $q1_selesai->latest()
-                                    ->paginate(10, ['*'], 'p1_done')
+                                    ->paginate(100, ['*'], 'p1_done')
                                     ->appends($request->all());
 
         // Attach Parent Data Manual Loop (Reg 1)
@@ -103,7 +103,7 @@ class BrandingStatusController extends Controller
         }
 
         $data2_proses = $q2_proses->latest()
-                                  ->paginate(10, ['*'], 'p2_pro')
+                                  ->paginate(100, ['*'], 'p2_pro')
                                   ->appends($request->all());
 
         // ---------------- [D] REGIONAL 2 - SELESAI ----------------
@@ -125,7 +125,7 @@ class BrandingStatusController extends Controller
         }
 
         $data2_selesai = $q2_selesai->latest()
-                                    ->paginate(10, ['*'], 'p2_done')
+                                    ->paginate(100, ['*'], 'p2_done')
                                     ->appends($request->all());
 
         // Attach Parent Data Manual Loop (Reg 2)

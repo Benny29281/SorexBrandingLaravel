@@ -69,7 +69,7 @@ class BrandingRequestController extends Controller
         }
         // Sortir berdasarkan angka di belakang ID (misal: BS10, BS2 -> BS10 dulu)
         $data1 = $query1->orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
-                        ->paginate(10, ['*'], 'page_reg1')
+                        ->paginate(50, ['*'], 'page_reg1')
                         ->appends($request->all());
 
         // --- QUERY REGIONAL 2 ---
@@ -83,7 +83,7 @@ class BrandingRequestController extends Controller
             });
         }
         $data2 = $query2->orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
-                        ->paginate(10, ['*'], 'page_reg2')
+                        ->paginate(50, ['*'], 'page_reg2')
                         ->appends($request->all());
 
         return view('admin.branding.index', compact('data1', 'data2'));
@@ -138,7 +138,7 @@ class BrandingRequestController extends Controller
         }
 
         // --- 2. UPDATE UKURAN DI TABEL ASLI (REG 1 / REG 2) ---
-        // Fitur pintar untuk update ukuran otomatis di tabel induk
+        
         if ($request->has('ukuran_tools_branding') && $request->filled('ukuran_tools_branding')) {
             $newSize = $request->input('ukuran_tools_branding');
             $prefix  = strtoupper(substr($reqId, 0, 2));
@@ -209,9 +209,6 @@ class BrandingRequestController extends Controller
     // ==========================================================
     // 7. FUNGSI HALAMAN STATUS BRANDING (REVISI ROBUST)
     // ==========================================================
-    // Fungsi ini menangani View Status. 
-    // Catatan: Jika Anda menggunakan BrandingStatusController, fungsi ini opsional di sini.
-    // Tapi saya perbaiki agar jika dipanggil, search-nya tetap jalan benar.
     public function indexStatus(Request $request)
     {
         $search = trim($request->input('search'));
@@ -229,7 +226,7 @@ class BrandingRequestController extends Controller
                   ->orWhereIn('request_id', BrandingRequest::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data1_proses = $q1_proses->latest()->paginate(15, ['*'], 'p1_proc')->appends($request->all());
+        $data1_proses = $q1_proses->latest()->paginate(50, ['*'], 'p1_proc')->appends($request->all());
 
         // Query Selesai Reg 1
         $q1_selesai = BrandingStatus::whereIn('request_id', $scopeReg1)->where('status_pekerjaan', 'SELESAI');
@@ -241,7 +238,7 @@ class BrandingRequestController extends Controller
                   ->orWhereIn('request_id', BrandingRequest::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data1_selesai = $q1_selesai->latest()->paginate(15, ['*'], 'p1_done')->appends($request->all());
+        $data1_selesai = $q1_selesai->latest()->paginate(50, ['*'], 'p1_done')->appends($request->all());
 
 
         // --- DATA REGIONAL 2 (RB) ---
@@ -257,7 +254,7 @@ class BrandingRequestController extends Controller
                   ->orWhereIn('request_id', BrandingRequest2::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data2_proses = $q2_proses->latest()->paginate(15, ['*'], 'p2_proc')->appends($request->all());
+        $data2_proses = $q2_proses->latest()->paginate(50, ['*'], 'p2_proc')->appends($request->all());
 
         // Query Selesai Reg 2
         $q2_selesai = BrandingStatus::whereIn('request_id', $scopeReg2)->where('status_pekerjaan', 'SELESAI');
@@ -269,7 +266,7 @@ class BrandingRequestController extends Controller
                   ->orWhereIn('request_id', BrandingRequest2::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data2_selesai = $q2_selesai->latest()->paginate(15, ['*'], 'p2_done')->appends($request->all());
+        $data2_selesai = $q2_selesai->latest()->paginate(50, ['*'], 'p2_done')->appends($request->all());
 
         // Tempel Data Parent (Wajib)
         foreach ($data1_proses as $i) $i->setRelation('parent_data', BrandingRequest::where('request_id', $i->request_id)->first());

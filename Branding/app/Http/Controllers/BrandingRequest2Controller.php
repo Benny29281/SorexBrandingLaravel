@@ -78,10 +78,10 @@ class BrandingRequest2Controller extends Controller
         // Mengurutkan berdasarkan angka di belakang ID (Misal: REG-001, REG-002)
         // Pastikan ID minimal 3 karakter agar SUBSTRING tidak error
         $data1 = BrandingRequest::orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
-                    ->paginate(10, ['*'], 'page_reg1');
+                    ->paginate(50, ['*'], 'page_reg1');
 
         $data2 = BrandingRequest2::orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
-                    ->paginate(10, ['*'], 'page_reg2');
+                    ->paginate(50, ['*'], 'page_reg2');
 
         return view('admin.branding.index', compact('data1', 'data2'));
     }
@@ -210,11 +210,7 @@ class BrandingRequest2Controller extends Controller
             $msg = 'Perubahan data berhasil disimpan.';
         }
 
-        // --- C. EKSEKUSI PENYIMPANAN (updateOrCreate) ---
-        // INI SOLUSI ERROR 1062:
-        // Sistem akan mencari ID tersebut.
-        // Jika ADA -> Data diupdate (Ukuran beda/tanggal beda akan terupdate).
-        // Jika TIDAK ADA -> Data baru dibuat.
+        // --- C. SIMPAN / UPDATE DATA STATUS ---
         
         try {
             BrandingStatus::updateOrCreate(
@@ -259,9 +255,6 @@ class BrandingRequest2Controller extends Controller
     // ==========================================================
     // 7. FUNGSI HALAMAN STATUS BRANDING (REVISI ROBUST)
     // ==========================================================
-    // Fungsi ini menangani View Status. 
-    // Catatan: Jika Anda menggunakan BrandingStatusController, fungsi ini opsional di sini.
-    // Tapi saya perbaiki agar jika dipanggil, search-nya tetap jalan benar.
     public function indexStatus(Request $request)
     {
         $search = trim($request->input('search'));
@@ -279,7 +272,7 @@ class BrandingRequest2Controller extends Controller
                   ->orWhereIn('request_id', BrandingRequest::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data1_proses = $q1_proses->latest()->paginate(15, ['*'], 'p1_proc')->appends($request->all());
+        $data1_proses = $q1_proses->latest()->paginate(50, ['*'], 'p1_proc')->appends($request->all());
 
         // Query Selesai Reg 1
         $q1_selesai = BrandingStatus::whereIn('request_id', $scopeReg1)->where('status_pekerjaan', 'SELESAI');
@@ -291,7 +284,7 @@ class BrandingRequest2Controller extends Controller
                   ->orWhereIn('request_id', BrandingRequest::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data1_selesai = $q1_selesai->latest()->paginate(15, ['*'], 'p1_done')->appends($request->all());
+        $data1_selesai = $q1_selesai->latest()->paginate(50, ['*'], 'p1_done')->appends($request->all());
 
 
         // --- DATA REGIONAL 2 (RB) ---
@@ -307,7 +300,7 @@ class BrandingRequest2Controller extends Controller
                   ->orWhereIn('request_id', BrandingRequest2::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data2_proses = $q2_proses->latest()->paginate(15, ['*'], 'p2_proc')->appends($request->all());
+        $data2_proses = $q2_proses->latest()->paginate(50, ['*'], 'p2_proc')->appends($request->all());
 
         // Query Selesai Reg 2
         $q2_selesai = BrandingStatus::whereIn('request_id', $scopeReg2)->where('status_pekerjaan', 'SELESAI');
@@ -319,7 +312,7 @@ class BrandingRequest2Controller extends Controller
                   ->orWhereIn('request_id', BrandingRequest2::where('nama_toko', 'LIKE', "%{$search}%")->pluck('request_id'));
             });
         }
-        $data2_selesai = $q2_selesai->latest()->paginate(15, ['*'], 'p2_done')->appends($request->all());
+        $data2_selesai = $q2_selesai->latest()->paginate(50, ['*'], 'p2_done')->appends($request->all());
 
         // Tempel Data Parent (Wajib)
         foreach ($data1_proses as $i) $i->setRelation('parent_data', BrandingRequest::where('request_id', $i->request_id)->first());

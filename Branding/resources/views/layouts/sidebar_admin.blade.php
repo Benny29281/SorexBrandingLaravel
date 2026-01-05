@@ -19,35 +19,46 @@
             <span class="ml-3">Request Branding</span>
         </a>
 
-        {{-- 3. STATUS BRANDING (SUDAH DIPERBAIKI) --}}
+        {{-- 3. STATUS BRANDING --}}
         <a href="{{ route('admin.status.index') }}" 
            class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('admin.status.index') ? 'bg-sidebar-active text-white border-l-4 border-red-600' : 'hover:bg-gray-700 hover:text-white border-l-4 border-transparent' }}">
             <i class="fas fa-list-check w-6 text-center"></i>
             <span class="ml-3">Status Branding</span>
         </a>
 
-        {{-- 4. LAPORAN (Updated) --}}
+        {{-- 4. LAPORAN --}}
         <a href="{{ route('admin.laporan.index') }}" 
            class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('admin.laporan.index') ? 'bg-sidebar-active text-white border-l-4 border-red-600' : 'hover:bg-gray-700 hover:text-white border-l-4 border-transparent' }}">
             <i class="fas fa-file-excel w-6 text-center"></i>
             <span class="ml-3">Laporan & Export</span>
         </a>
 
-        {{-- 5. REGISTER USER --}}
+        {{-- 5. NOTIFIKASI (BARU) --}}
+        <a href="{{ route('notification.index') }}" 
+           class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('notification.index') ? 'bg-sidebar-active text-white border-l-4 border-red-600' : 'hover:bg-gray-700 hover:text-white border-l-4 border-transparent' }}">
+            <i class="fas fa-bell w-6 text-center"></i>
+            <span class="ml-3">Notifikasi</span>
+            {{-- Badge Angka (Opsional: Muncul jika ada variabel $unreadCount) --}}
+            @if(isset($unreadCount) && $unreadCount > 0)
+                <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ $unreadCount }}</span>
+            @endif
+        </a>
+
+        {{-- 6. REGISTER USER --}}
         <a href="{{ route('admin.register') }}" 
            class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('admin.register') ? 'bg-sidebar-active text-white border-l-4 border-red-600' : 'hover:bg-gray-700 hover:text-white border-l-4 border-transparent' }}">
             <i class="fas fa-user-plus w-6 text-center"></i>
             <span class="ml-3">Register User</span>
         </a>
 
-        {{-- 6. RIWAYAT LOGIN --}}
+        {{-- 7. RIWAYAT LOGIN --}}
         <a href="{{ route('admin.users.index') }}" 
            class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('admin.users.index') || request()->routeIs('admin.users.edit') ? 'bg-sidebar-active text-white border-l-4 border-red-600' : 'hover:bg-gray-700 hover:text-white border-l-4 border-transparent' }}">
             <i class="fas fa-users w-6 text-center"></i>
-            <span class="ml-3">Riwayat Login User</span>
+            <span class="ml-3">Manage Login User</span>
         </a>
 
-        {{-- 7. SETTING --}}
+        {{-- 8. SETTING --}}
         <a href="{{ url('/profile') }}" class="flex items-center px-6 py-3 hover:bg-gray-700 hover:text-white transition-colors border-l-4 border-transparent">
             <i class="fas fa-cog w-6 text-center"></i>
             <span class="ml-3">Setting</span>
