@@ -1,230 +1,274 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+
+// --- CONTROLLER IMPORTS ---
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\BrandingRequestController;
-use App\Http\Controllers\BrandingRequest2Controller;
-use App\Http\Controllers\Admin\UserController; 
-use App\Http\Controllers\BrandingStatusController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\UserRequestController;
+use App\Http\Controllers\Admin\MasterDataController; // Controller Master Data
 use App\Http\Controllers\NotificationController;
+
+// Controller Regional 1 (JT, DK, LP)
+use App\Http\Controllers\BrandingRequestController;
+
+// Controller Regional 2 (JB, JR)
+use App\Http\Controllers\BrandingRequest2Controller;
+use App\Http\Controllers\BrandingStatusController;
+
+// Controller User (Sales/Store)
+use App\Http\Controllers\UserRequestController;
 use App\Http\Controllers\User\HomeController;
 
+use Illuminate\Support\Facades\Storage;
 
 
+/*
+|--------------------------------------------------------------------------
+| WEB ROUTES (PUBLIC & AUTH BASIC)
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Dashboard User Biasa (Default Laravel)
+// Dashboard Default Laravel (Redirect ke home user/admin nanti di logic controller)// GANTI DENGAN INI:
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = auth()->user();
+    $role = $user->regional;
+
+    // Daftar yang harus ke Admin Dashboard
+    $aksesAdmin = ['Admin', 'Design'];
+
+    if (in_array($role, $aksesAdmin)) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    // Sisanya (LP, JB, JR, JT, DK) lempar ke Home User
+    return redirect()->route('user.home');
+    
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Profile Standard
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Auth Routes (Login, Register, dll)
 require __DIR__.'/auth.php';
 
-// 1. Route Dashboard Admin
-// Harus mengarah ke [DashboardController::class, 'index'] agar data Total terbaca
-Route::get('/admin/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('admin.dashboard');
 
-// Route untuk melihat Tabel Data 1 (JT, DK, LP)
-Route::get('/admin/data-branding-1', [BrandingRequestController::class, 'indexData1'])->name('data.branding1');
-
-// Route untuk melihat Tabel Data 2 (JB, JR)
-Route::get('/admin/data-branding-2', [BrandingRequest2Controller::class, 'indexData2'])->name('data.branding2');
-
-// 1. Upload Data JT, DK, LP (Tabel 1)
-// Nama rute harus 'import.branding' agar sesuai dengan View
-Route::post('/import-branding', [BrandingRequestController::class, 'import'])
-    ->name('import.branding');
-
-// 2. Upload Data JB, JR (Tabel 2)
-// Nama rute harus 'import.branding2' agar sesuai dengan View
-Route::post('/import-branding-2', [BrandingRequest2Controller::class, 'import2'])
-    ->name('import.branding2');
-
+/*
+|--------------------------------------------------------------------------
+| ADMIN ROUTES (GROUP)
+|--------------------------------------------------------------------------
+| Semua route di sini memiliki prefix 'admin' dan middleware 'auth'.
+| URL Akses: domain.com/admin/....
+*/
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route dashboard yang lain ...
 
-    // Route untuk Halaman Register User Baru
-    Route::get('/register-user', [UserController::class, 'create'])->name('admin.register');
-    
-    // Route untuk Proses Simpan User
-    Route::post('/register-user', [UserController::class, 'store'])->name('admin.register.store');
-});
+    // 1. DASHBOARD
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route dashboard lainnya ...
-
-    // 1. LIHAT LIST USER (Riwayat)
+    // 2. USER MANAGEMENT (Register & List User)
+    // List User
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-
-    // 2. FORM REGISTER (Yang sudah ada sebelumnya)
-    Route::get('/users/create', [UserController::class, 'create'])->name('admin.register');
-    Route::post('/users/store', [UserController::class, 'store'])->name('admin.register.store');
-
-    // 3. EDIT USER
+    // Form Tambah User
+    Route::get('/register-user', [UserController::class, 'create'])->name('admin.register');
+    Route::post('/register-user', [UserController::class, 'store'])->name('admin.register.store');
+    // Edit & Hapus User
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
-
-    // 4. HAPUS USER
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
-});
 
 
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route lainnya ...
+    // 3. MASTER DATA (Controller Input Data - Sales, SPV, Tools)
+    // Menggunakan Resource agar otomatis mencakup index, create, store, edit, update, destroy
+    Route::resource('master', MasterDataController::class)->names([
+        'index' => 'admin.master.index',
+        'create' => 'admin.master.create',
+        'store' => 'admin.master.store',
+        'edit' => 'admin.master.edit',
+        'update' => 'admin.master.update',
+        'destroy' => 'admin.master.destroy',
+    ]);
 
-    // ROUTE HALAMAN REQUEST BRANDING
-    Route::get('/request-branding', [BrandingRequestController::class, 'indexRequest'])->name('admin.request.branding');
-});
 
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route lainnya ...
-
-    // ROUTE HALAMAN REQUEST BRANDING
-    Route::get('/request-branding', [BrandingRequest2Controller::class, 'indexRequest'])->name('admin.request.branding');
-});
-
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
+    // 4. DATA BRANDING (TABEL REGIONAL 1 & 2)
+    // Lihat Data Reg 1
+    Route::get('/data-branding-1', [BrandingRequestController::class, 'indexData1'])->name('data.branding1');
+    // Lihat Data Reg 2
+    Route::get('/data-branding-2', [BrandingRequest2Controller::class, 'indexData2'])->name('data.branding2');
     
-    // ... route lainnya ...
+    // Import Data Reg 1
+    Route::post('/import-branding', [BrandingRequestController::class, 'import'])->name('import.branding');
+    // Import Data Reg 2
+    Route::post('/import-branding-2', [BrandingRequest2Controller::class, 'import2'])->name('import.branding2');
 
-    // Route ini memanggil fungsi indexRequest di BrandingRequestController
-    Route::get('/request-branding', [BrandingRequestController::class, 'indexRequest'])
-        ->name('admin.request.branding');
 
-    Route::get('/request-branding', [BrandingRequest2Controller::class, 'indexRequest'])
-        ->name('admin.request.branding');
-
-});
-
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    
-    // ... route lainnya ...
-
-    // ROUTE UTAMA
+    // 5. REQUEST BRANDING (HALAMAN UTAMA)
+    // Kita arahkan ke Controller Utama (Reg 1) sebagai default view, nanti di view diload datanya
     Route::get('/request-branding', [BrandingRequestController::class, 'indexRequest'])->name('admin.request.branding');
-
-    // ROUTE DELETE (Menghapus Data)
+    
+    // Action: Hapus Data Request
     Route::delete('/request-branding/{region}/{id}', [BrandingRequestController::class, 'destroy'])->name('admin.request.destroy');
+    // Action: Store Status (Update status ACC/Tolak)
+    Route::post('/request-branding/store-status', [BrandingRequestController::class, 'storeStatus'])->name('admin.request.store_status');
+    Route::post('/admin/request/status', [BrandingRequest2Controller::class, 'storeStatus'])->name('admin.request.store_status');
 
-    // ROUTE EDIT (Halaman Edit - Opsional jika mau dibuatkan nanti)
-    Route::get('/request-branding/{region}/{id}/edit', [BrandingRequest2Controller::class, 'edit'])->name('admin.request.edit');
-});
 
-Route::post('/request-branding/store-status', [BrandingRequestController::class, 'storeStatus'])
-    ->name('admin.request.store_status');
-
-// Route::post('/request-branding/store-status', [BrandingRequest2Controller::class, 'storeStatus'])
-//     ->name('admin.request.store_status');
-
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route lain ...
-
-    // HALAMAN STATUS BRANDING (REKAP)
+    // 6. STATUS BRANDING (REKAP)
     Route::get('/status-branding', [BrandingStatusController::class, 'index'])->name('admin.status.index');
-});
-
-Route::post('/admin/status-branding/import', [App\Http\Controllers\BrandingRequestController::class, 'importStatus'])->name('admin.status.import');
-Route::post('/admin/status-branding/import', [App\Http\Controllers\BrandingRequest2Controller::class, 'importStatus'])->name('admin.status.import');
-
-// Route untuk Regional 1
-Route::get('/status-branding/reg1', [BrandingRequestController::class, 'indexStatus'])
-    ->name('admin.status.reg1');
-
-// Route untuk Regional 2
-Route::get('/status-branding/reg2', [BrandingRequest2Controller::class, 'indexStatus'])
-    ->name('admin.status.reg2');
     
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-    // ... route yang lain ...
+    // Import Status (PISAH URL AGAR TIDAK KONFLIK)
+    Route::post('/status-branding/import-reg1', [BrandingRequestController::class, 'importStatus'])->name('admin.status.import');
+    Route::post('/status-branding/import-reg2', [BrandingRequest2Controller::class, 'importStatus'])->name('admin.status.import2'); // Nama route beda
+    
+    // Lihat Status per Regional (JSON/Partial)
+    Route::get('/status-branding/reg1', [BrandingRequestController::class, 'indexStatus'])->name('admin.status.reg1');
+    Route::get('/status-branding/reg2', [BrandingRequest2Controller::class, 'indexStatus'])->name('admin.status.reg2');
 
-    // MENU LAPORAN
+
+    // 7. LAPORAN & EXPORT
     Route::get('/laporan', [ReportController::class, 'index'])->name('admin.laporan.index');
     Route::post('/laporan/export', [ReportController::class, 'export'])->name('admin.laporan.export');
-});
-
-
-// ROUTE KHUSUS USER (SALES / STORE)
-Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Halaman Utama User
-    Route::get('/home', [UserRequestController::class, 'index'])->name('user.home');
-    
-    // Proses Simpan Form
-    Route::post('/home/store', [UserRequestController::class, 'store'])->name('user.request.store');
 
 });
 
-// --- ROUTE USER BIASA (Masuk ke Home Input) ---
-Route::get('/home', [UserRequestController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('user.home');
 
-Route::post('/home/store', [UserRequestController::class, 'store'])
-    ->middleware(['auth', 'verified'])
-    ->name('user.request.store');
+/*
+|--------------------------------------------------------------------------
+| USER ROUTES (SALES / STORE / DESIGN)
+|--------------------------------------------------------------------------
+*/
 
-Route::prefix('user')->name('user.')->group(function () {
+Route::prefix('user')->middleware(['auth', 'verified'])->group(function () {
     
-    // 1. Halaman Form Input Baru (Input Data)
-    Route::get('/request/create', [UserRequestController::class, 'create'])->name('request.create');
-    
-    // 2. Proses Simpan Data (Action Form)
-    Route::post('/request/store', [UserRequestController::class, 'store'])->name('request.store');
-
-    // 3. Halaman Revisi (Revisi Data)
-    Route::get('/request/revisi', [UserRequestController::class, 'revisi'])->name('request.revisi');
-
-    // 4. Proses Tracking (Cari Data)
-    Route::get('/request/track', [UserRequestController::class, 'track'])->name('request.track');
-
-});
-
-// Halaman Form Pencarian ID (Sudah ada di controller sebelumnya 'revisi')
-Route::get('/request/revisi', [UserRequestController::class, 'revisi'])->name('user.request.revisi');
-
-// Proses Cek ID (POST)
-Route::post('/request/revisi/check', [UserRequestController::class, 'checkRevisi'])->name('user.request.check');
-
-// Proses Simpan Perubahan (PUT/POST)
-Route::put('/request/revisi/update', [UserRequestController::class, 'updateRevisi'])->name('user.request.update');
-
-Route::get('/user/log-aktivitas', [UserRequestController::class, 'historyLog'])->name('user.log');
-
-// Route untuk Notifikasi
-Route::get('/notification/read/{id}', [NotificationController::class, 'markAsRead'])->name('notification.read');
-Route::get('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notification.read.all');
-Route::get('/notifications/all', [NotificationController::class, 'index'])->name('notification.index');
-
-
-// Pastikan ada di dalam group User + Auth
-Route::prefix('user')->middleware(['auth'])->group(function () {
-    
+    // 1. HOME & DASHBOARD USER
     Route::get('/home', [HomeController::class, 'index'])->name('user.home');
 
-     Route::get('/pusat-download', [HomeController::class, 'viewDownloadPage'])->name('user.download.page');
+    // 2. FORM INPUT BARU
+    Route::get('/request/create', [UserRequestController::class, 'create'])->name('user.request.create');
+    Route::post('/request/store', [UserRequestController::class, 'store'])->name('user.request.store');
+
+    // 3. TRACKING & REVISI
+    Route::get('/request/track', [UserRequestController::class, 'track'])->name('user.request.track');
     
-    // INI ROUTE DOWNLOADNYA (WAJIB GET)
+    // Revisi
+    Route::get('/request/revisi', [UserRequestController::class, 'revisi'])->name('user.request.revisi');
+    Route::post('/request/revisi/check', [UserRequestController::class, 'checkRevisi'])->name('user.request.check');
+    Route::put('/request/revisi/update', [UserRequestController::class, 'updateRevisi'])->name('user.request.update');
+
+    // 4. DOWNLOAD CENTER (Design/User)
+    Route::get('/pusat-download', [HomeController::class, 'viewDownloadPage'])->name('user.download.page');
     Route::get('/download-status', [HomeController::class, 'downloadStatus'])->name('user.download.status');
+
+    // 5. UTILITY USER
+    Route::get('/log-aktivitas', [UserRequestController::class, 'historyLog'])->name('user.log');
+    Route::post('/profile/upload', [UserRequestController::class, 'uploadPhoto'])->name('user.profile.upload');
 
 });
 
-Route::post('/user/profile/upload', [App\Http\Controllers\UserRequestController::class, 'uploadPhoto'])->name('user.profile.upload');
 
+/*
+|--------------------------------------------------------------------------
+| UTILITY ROUTES (SHARED)
+|--------------------------------------------------------------------------
+*/
+
+// Notifikasi
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications/all', [NotificationController::class, 'index'])->name('notification.index');
+    Route::get('/notification/read/{id}', [NotificationController::class, 'markAsRead'])->name('notification.read');
+    Route::get('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notification.read.all');
+});
+
+// Refresh CSRF Token (Untuk AJAX)
 Route::get('/refresh-csrf', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 })->name('refresh.csrf');
+
+Route::get('/cek-drive', function() {
+    try {
+        // Coba list file di dalam folder tujuan
+        $files = Storage::disk('google')->files();
+        
+        return [
+            'status' => 'Koneksi Berhasil!',
+            'files_di_folder_ini' => $files
+        ];
+    } catch (\Exception $e) {
+        return ['error' => $e->getMessage()];
+    }
+});
+
+// use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Config;
+
+Route::get('/cek-drive-final', function () {
+    try {
+        echo "<h1>🕵️ Detektif Google Drive</h1>";
+        
+        // 1. Cek Konfigurasi
+        $folderId = Config::get('filesystems.disks.google.folderId');
+        $jsonPath = Config::get('filesystems.disks.google.serviceAccountCredentials');
+        
+        echo "<b>1. Konfigurasi:</b><br>";
+        echo "• Folder ID Target: <code>{$folderId}</code><br>";
+        echo "• Lokasi JSON: <code>{$jsonPath}</code><br>";
+        
+        // 2. Cek Isi JSON (Mencari Email Robot)
+        if (file_exists($jsonPath)) {
+            $jsonContent = json_decode(file_get_contents($jsonPath), true);
+            $clientEmail = $jsonContent['client_email'] ?? 'Tidak ditemukan';
+            echo "• <b>Email Robot (Service Account):</b> <code style='color:red; font-size:1.2em'>{$clientEmail}</code> <br>";
+            echo "<i>(⚠️ Pastikan Folder Google Drive Anda sudah di-Share ke email merah di atas sebagai EDITOR!)</i><br><br>";
+        } else {
+            throw new Exception("File JSON tidak ditemukan di path tersebut!");
+        }
+
+        // 3. Tes Tulis File Sederhana
+        echo "<b>2. Tes Upload File Teks:</b><br>";
+        $fileName = 'tes_koneksi_' . time() . '.txt';
+        Storage::disk('google')->put($fileName, 'Halo! Ini tes dari Laravel. Jika Anda membaca ini, koneksi BERHASIL.');
+        echo "• Mencoba upload file bernama <code>{$fileName}</code>... ";
+        
+        // Cek apakah file benar-benar ada via API
+        if (Storage::disk('google')->exists($fileName)) {
+            echo "<span style='color:green; font-weight:bold'>SUKSES! ✅</span><br>";
+            echo "• File berhasil dibuat di root folder.<br>";
+        } else {
+            echo "<span style='color:red; font-weight:bold'>GAGAL! ❌</span> (File tidak terdeteksi setelah upload)<br>";
+        }
+
+        // 4. Tes Buat Folder uploads/branding
+        echo "<br><b>3. Tes Folder 'uploads/branding':</b><br>";
+        $targetPath = 'uploads/branding/tes_gambar.txt';
+        Storage::disk('google')->put($targetPath, 'Tes file di dalam folder.');
+        echo "• Mencoba upload ke <code>{$targetPath}</code>... <span style='color:green; font-weight:bold'>OK</span><br>";
+        
+        // 5. Tampilkan URL
+        $url = Storage::disk('google')->url($fileName);
+        echo "<br><b>4. URL File:</b> <a href='{$url}' target='_blank'>{$url}</a>";
+
+        echo "<hr><h3>🎉 Kesimpulan:</h3>";
+        echo "Jika semua status di atas HIJAU, cek Google Drive folder <code>{$folderId}</code> sekarang. <br>";
+        echo "Cari file bernama <b>{$fileName}</b>. Jika tidak ada, berarti Anda salah share folder atau salah Folder ID.";
+
+    } catch (\Exception $e) {
+        echo "<h3 style='color:red'>TERJADI ERROR:</h3>";
+        echo $e->getMessage();
+        echo "<br><br><b>Stack Trace:</b><br>" . $e->getTraceAsString();
+    }
+});
+
+// if (!User::where('role', 'admin')->exists()) {
+//     User::create([...]);
+// }

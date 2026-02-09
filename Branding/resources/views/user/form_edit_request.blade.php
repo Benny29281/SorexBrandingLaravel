@@ -48,7 +48,6 @@
         <nav class="hidden md:flex space-x-8 text-sm font-semibold uppercase tracking-wider items-center">
             <a href="{{ route('user.home') }}" class="hover:text-red-200 transition flex items-center"><i class="fas fa-home mr-2"></i> Home</a>
             <a href="{{ route('user.log') }}" class="hover:text-red-200 transition relative group flex items-center"><i class="fas fa-history mr-2"></i> Log Aktivitas</a>
-            <a href="{{ route('user.download.page') }}" class="text-white font-bold text-sm hover:underline flex items-center uppercase tracking-wider"><i class="fas fa-file-download mr-2"></i> Download Data</a>
             <div class="border-l border-red-300 h-6 mx-2"></div>
             
             {{-- PROFILE BULAT --}}
@@ -182,18 +181,27 @@
                     <div class="relative">
                         <input type="text" name="jenis_tools" list="list_tools" value="{{ $data->jenis_tools_branding }}" required autocomplete="off" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-sorex outline-none transition placeholder-gray-400 font-medium" placeholder="Ketik untuk mencari...">
                         <datalist id="list_tools">
-                            <option value="SPANDUK KOREA"></option>
-                            <option value="SPANDUK KOREA (PAKAI MATA AYAM)"></option>
-                            <option value="SPANDUK CHINA"></option>
-                            <option value="PVC BOARD"></option>
+                            <option value="AKRILIK BENING"></option>
+                            <option value="AKRILIK KAPUR / PVC"></option>
+                            <option value="ART PAPER / POP"></option>
+                            <option value="CUTTING AKRILIK BACKWALL"></option>
+                            <option value="IMPRABOARD"></option>
                             <option value="NEONBOX"></option>
+                            <option value="POSTER DOFF"></option>
+                            <option value="POSTER GLOSSY"></option>
+                            <option value="PVC BOARD"></option>
+                            <option value="ROLL UP BANNER"></option>
+                            <option value="SPANDUK CHINA"></option>
+                            <option value="SPANDUK CHINA (PAKAI MATA AYAM)"></option>
+                            <option value="SPANDUK KOREA (PAKAI MATA AYAM)"></option>
                             <option value="STIKER BACKLITE (UNTUK NEONBOX)"></option>
                             <option value="STIKER DOFF"></option>
                             <option value="STIKER GLOSSY"></option>
                             <option value="STIKER ONEWAY"></option>
+                            <option value="STIKER OVERPRINT (UNTUK NEONBOX)"></option>
+                            <option value="TRIPOD BANNER"></option>
+                            <option value="WOBBLER"></option>
                             <option value="X BANNER"></option>
-                            <option value="ROLL UP BANNER"></option>
-                            <option value="Lainnya"></option>
                         </datalist>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-search"></i></div>
                     </div>

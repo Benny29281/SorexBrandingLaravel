@@ -167,9 +167,7 @@
 
             </div>
 
-        </main>
-
-       {{-- Tampilkan Pesan Sukses/Error Global
+            Tampilkan Pesan Sukses/Error Global
 @if(session('success'))
     <div class="bg-green-500 text-white p-3 rounded mb-4">{{ session('success') }}</div>
 @endif
@@ -215,7 +213,10 @@
                 <i class="fas fa-upload mr-2"></i> Upload JB & JR
             </button>
         </form>
-    </div> --}}
+    </div>
+
+        </main>
+
 
 </div>
 

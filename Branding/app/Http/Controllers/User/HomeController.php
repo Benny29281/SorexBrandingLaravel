@@ -15,13 +15,18 @@ class HomeController extends Controller
         return view('user.home');
     }
 
+    public function viewDownloadPage() 
+    {
+        return view('user.download');
+    }
+
     public function logAktivitas()
     {
         return view('user.log_aktivitas');
     }
 
     // --- FITUR DOWNLOAD DENGAN FILTER REGIONAL YANG BENAR ---
-   public function downloadStatus(Request $request)
+    public function downloadStatus(Request $request)
     {
         // 1. Validasi Input
         $request->validate([
@@ -50,7 +55,7 @@ class HomeController extends Controller
             if (in_array($pilihanUser, $masterAccess)) {
                 $finalRegions = [$pilihanUser]; // Ambil 1 area
             } else {
-                $finalRegions = $masterAccess; // Jika nakal, kasih semua hak dia
+                $finalRegions = $masterAccess; 
             }
         } else {
             // Jika pilih ALL

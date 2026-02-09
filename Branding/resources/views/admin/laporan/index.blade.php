@@ -10,6 +10,7 @@
     
     <style>
         .bg-sidebar { background-color: #3d3d3d; }
+        .bg-sidebar-active { background-color: #e02222; }
         .bg-header { background-color: #2b2b2b; }
         body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
@@ -38,7 +39,8 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-visible" x-data="{ openColumns: true, selectAll: true }">
+                {{-- REVISI: openColumns: false (DEFAULT TERTUTUP) --}}
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-visible" x-data="{ openColumns: false, selectAll: true }">
                     <div class="bg-gray-800 px-6 py-4 border-b border-gray-700">
                         <h3 class="text-white font-bold text-lg"><i class="fas fa-filter mr-2"></i> Konfigurasi Export</h3>
                     </div>
@@ -90,6 +92,7 @@
                             </button>
 
                             <div x-show="openColumns" 
+                                 x-cloak 
                                  class="mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden w-full z-50">
                                 
                                 <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
@@ -100,11 +103,11 @@
                                     </label>
                                 </div>
 
-                                {{-- GRID CHECKBOXES - DIURUTKAN SESUAI GAMBAR --}}
+                                {{-- GRID CHECKBOXES --}}
                                 <div class="p-6 bg-white max-h-[500px] overflow-y-auto custom-scroll">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         
-                                        {{-- GROUP 1: INFO UTAMA (Sesuai Gambar 1 - Header Hitam) --}}
+                                        {{-- GROUP 1: INFO UTAMA --}}
                                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                             <div class="mb-3 border-b border-gray-200 pb-2">
                                                 <span class="text-xs font-bold text-gray-800 uppercase tracking-wider bg-gray-200 px-2 py-1 rounded">BAGIAN 1: INFO REQUEST</span>
@@ -122,7 +125,7 @@
                                             </div>
                                         </div>
 
-                                        {{-- GROUP 2: DESIGN & VENDOR (Sesuai Gambar 2 - Header Biru/Coklat) --}}
+                                        {{-- GROUP 2: DESIGN & VENDOR --}}
                                         <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                             <div class="mb-3 border-b border-blue-200 pb-2">
                                                 <span class="text-xs font-bold text-blue-800 uppercase tracking-wider bg-blue-200 px-2 py-1 rounded">BAGIAN 2: DESIGN & VENDOR</span>
@@ -139,7 +142,7 @@
                                             </div>
                                         </div>
 
-                                        {{-- GROUP 3: GUDANG & FINISH (Sesuai Gambar 3 - Header Hijau/Ungu) --}}
+                                        {{-- GROUP 3: GUDANG & FINISH --}}
                                         <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                                             <div class="mb-3 border-b border-green-200 pb-2">
                                                 <span class="text-xs font-bold text-green-800 uppercase tracking-wider bg-green-200 px-2 py-1 rounded">BAGIAN 3: GUDANG & FINISH</span>

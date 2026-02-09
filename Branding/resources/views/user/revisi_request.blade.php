@@ -16,6 +16,9 @@
     
     {{-- Google Font: Poppins --}}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    {{-- SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         body { font-family: 'Poppins', sans-serif; }
@@ -24,7 +27,7 @@
         .btn-sorex { background-color: #d71920; transition: 0.3s; }
         .btn-sorex:hover { background-color: #b01217; transform: translateY(-2px); shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-        /* Style Lengkungan Background (Sama persis seperti Home) */
+        /* Style Lengkungan Background */
         .curved-bg {
             background-color: #f3f4f6;
             border-top-left-radius: 50% 20%;
@@ -76,80 +79,50 @@
 
 
     {{-- =========================================
-         2. NAVBAR / HEADER (SAMA DENGAN HOME)
+         2. NAVBAR / HEADER (UPDATED - LEBIH RINGKAS)
          ========================================= --}}
-    <header class="w-full py-4 px-6 sm:px-10 flex justify-between items-center text-white z-50 relative">
+    <header class="w-full py-3 px-4 sm:px-10 flex justify-between items-center text-white z-50 relative bg-sorex shadow-md"> {{-- Padding dan Shadow disesuaikan --}}
         <div class="flex items-center z-50">
-            {{-- Klik Logo kembali ke Home --}}
             <a href="{{ route('user.home') }}">
-                <img src="{{ asset('img/logo5.png') }}" alt="SOREX Logo" class="h-10 md:h-12 w-auto drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <h1 class="text-3xl font-extrabold tracking-widest italic drop-shadow-md hidden">SOREX</h1>
+                <img src="{{ asset('img/logo5.png') }}" alt="SOREX Logo" class="h-8 md:h-12 w-auto drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"> {{-- Logo lebih kecil di mobile --}}
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-widest italic drop-shadow-md hidden">SOREX</h1>
             </a>
         </div>
 
-        {{-- Hamburger Mobile --}}
         <button @click="open = !open" class="md:hidden text-white focus:outline-none z-50 p-2 rounded hover:bg-red-800 transition">
-            <i x-show="!open" class="fas fa-bars text-2xl"></i>
-            <i x-show="open" x-cloak class="fas fa-times text-2xl"></i>
+            <i x-show="!open" class="fas fa-bars text-xl"></i> {{-- Icon lebih kecil --}}
+            <i x-show="open" x-cloak class="fas fa-times text-xl"></i>
         </button>
 
-        {{-- Menu Desktop --}}
         <nav class="hidden md:flex space-x-8 text-sm font-semibold uppercase tracking-wider items-center">
-            
-            <a href="{{ route('user.home') }}" class="hover:text-red-200 transition flex items-center">
-                <i class="fas fa-home mr-2"></i> Home
-            </a>
-            
-            <a href="{{ route('user.log') }}" class="hover:text-red-200 transition relative group flex items-center">
-                <i class="fas fa-history mr-2"></i> Log Aktivitas
-            </a>
-            
-            <a href="{{ route('user.download.page') }}" class="text-white font-bold text-sm hover:underline flex items-center uppercase tracking-wider">
-                <i class="fas fa-file-download mr-2"></i> Download Data
-            </a>
-            
+            <a href="{{ route('user.home') }}" class="hover:text-red-200 transition flex items-center"><i class="fas fa-home mr-2"></i> Home</a>
+            <a href="{{ route('user.log') }}" class="hover:text-red-200 transition relative group flex items-center"><i class="fas fa-history mr-2"></i> Log Aktivitas</a>
             <div class="border-l border-red-300 h-6 mx-2"></div>
             
-            {{-- PROFILE BULAT --}}
             <div class="relative group cursor-pointer mr-2" @click="showProfileModal = true">
-                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg bg-red-800 transform group-hover:scale-110 transition duration-300">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true" 
-                         alt="Profile" class="w-full h-full object-cover">
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg bg-white transform group-hover:scale-110 transition duration-300">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true" alt="Profile" class="w-full h-full object-cover">
                 </div>
             </div>
 
             <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
-                <button type="submit" class="bg-white text-sorex px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition shadow-lg transform hover:scale-105 text-xs">
-                    Log Out <i class="fas fa-sign-out-alt ml-1"></i>
-                </button>
+                <button type="submit" class="bg-white text-sorex px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition shadow-lg transform hover:scale-105 text-xs">Log Out <i class="fas fa-sign-out-alt ml-1"></i></button>
             </form>
         </nav>
 
         {{-- Menu Mobile --}}
-        <div x-show="open" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 -translate-y-full"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0"
-             x-transition:leave-end="opacity-0 -translate-y-full"
-             x-cloak
-             class="absolute top-0 left-0 w-full bg-red-900/95 backdrop-blur-md shadow-2xl md:hidden pt-24 pb-8 px-6 flex flex-col space-y-4 text-center z-40 border-b border-red-700">
-            
-            {{-- Profile Mobile --}}
+        <div x-show="open" x-transition x-cloak class="absolute top-0 left-0 w-full bg-red-900/95 backdrop-blur-md shadow-2xl md:hidden pt-24 pb-8 px-6 flex flex-col space-y-4 text-center z-40 border-b border-red-700">
             <div class="flex flex-col items-center mb-4 border-b border-red-800 pb-4">
-                <div class="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-2 bg-red-800 shadow-xl">
+                <div class="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-2 bg-white shadow-xl">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true" class="w-full h-full object-cover">
                 </div>
                 <h3 class="text-white font-bold text-lg tracking-wide">{{ Auth::user()->name }}</h3>
                 <p class="text-red-200 text-xs">{{ Auth::user()->email }}</p>
             </div>
-
             <a href="{{ route('user.home') }}" class="block py-3 hover:bg-white/10 rounded-xl font-bold tracking-wide transition"><i class="fas fa-home mr-2"></i> Home</a>
             <a href="{{ route('user.log') }}" class="block py-3 hover:bg-white/10 rounded-xl font-bold tracking-wide transition"><i class="fas fa-history mr-2"></i> Log Aktivitas</a>
             <a href="{{ route('user.download.page') }}" class="block w-full py-3 hover:bg-white/10 rounded-xl font-bold tracking-wide transition text-white uppercase"><i class="fas fa-file-download mr-2"></i> Download Data</a>
-
             <div class="border-t border-white/20 pt-4 mt-2">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -266,6 +239,33 @@
     <footer class="w-full text-center py-4 text-xs font-medium text-black/60 z-50 relative">
         &copy; 2025 SOREX Branding System. All Rights Reserved.
     </footer>
+
+    {{-- SweetAlert Logic --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pop-up jika ada error (Data sudah pernah direvisi / tidak ditemukan)
+            @if ($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Akses Ditolak',
+                    text: "{{ $errors->first() }}",
+                    confirmButtonColor: '#d71920',
+                    confirmButtonText: 'Saya Mengerti',
+                    footer: '<a href="https://wa.me/NOMOR_ADMIN_DISINI" class="text-sorex font-bold text-xs" target="_blank"><i class="fab fa-whatsapp"></i> Hubungi Admin Sorex</a>'
+                });
+            @endif
+
+            // Pop-up jika sukses
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: "{{ session('success') }}",
+                    confirmButtonColor: '#d71920'
+                });
+            @endif
+        });
+    </script>
 
     {{-- MODAL PROFILE POPUP (Sama seperti Home) --}}
     <div x-show="showProfileModal" style="display: none;" 

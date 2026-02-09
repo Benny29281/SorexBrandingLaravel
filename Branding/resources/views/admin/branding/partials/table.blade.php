@@ -5,20 +5,19 @@
             <tr class="bg-gray-900 text-white uppercase text-xs font-bold tracking-wider">
                 <th class="py-3 px-6 text-left border-b border-gray-700">Tanggal</th>
                 <th class="py-3 px-6 text-left border-b border-gray-700">ID</th>
-                <th class="py-3 px-6 text-left border-b border-gray-700">Toko</th>
+                <th class="py-3 px-6 text-left border-b border-gray-700">Nama Sales</th>
+                <th class="py-3 px-6 text-center border-b border-gray-700">Nama Toko</th>
                 <th class="py-3 px-6 text-center border-b border-gray-700">Area</th>
                 <th class="py-3 px-6 text-left border-b border-gray-700">Brand</th>
-                <th class="py-3 px-6 text-left border-b border-gray-700">Tools</th>
-                <th class="py-3 px-6 text-center border-b border-gray-700">Qty</th>
+                <th class="py-3 px-6 text-left border-b border-gray-700">Permintaan</th>
                 <th class="py-3 px-6 text-center border-b border-gray-700">Actions</th>
             </tr>
         </thead>
         
-        {{-- BODY (TEKS HITAM) --}}
         <tbody class="text-gray-900 text-sm font-medium">
             @forelse($data as $item)
                 @php
-                    // LOGIKA WARNA ID (BS = Merah, RB = Hijau)
+                    // LOGIKA WARNA ID
                     $idColorClass = 'text-gray-700'; 
                     if (str_contains($item->request_id, 'BS')) {
                         $idColorClass = 'text-red-600'; 
@@ -26,8 +25,8 @@
                         $idColorClass = 'text-green-600';
                     }
 
-                    // LOGIKA WARNA AREA (Background Saja, Teks Hitam)
-                    $areaBgClass = 'bg-gray-100'; // Default
+                    // LOGIKA WARNA AREA
+                    $areaBgClass = 'bg-gray-100';
                     $area = strtoupper($item->area_sales);
                     
                     if ($area == 'JT') { $areaBgClass = 'bg-red-200'; }
@@ -41,20 +40,35 @@
                     
                     {{-- TANGGAL --}}
                     <td class="py-3 px-6 whitespace-nowrap text-black font-semibold">
-                        {{ \Carbon\Carbon::parse($item->submission_date)->format('d M Y') }}
+                        <div class="flex items-center gap-2">
+                            {{ \Carbon\Carbon::parse($item->submission_date)->format('d M Y') }}
+
+                            @if(\Carbon\Carbon::parse($item->submission_date)->isToday())
+                                <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded animate-pulse shadow-sm">
+                                    NEW
+                                </span>
+                            @endif
+                        </div>
                     </td>
 
-                    {{-- ID REQUEST (Warna Merah/Hijau Tebal) --}}
+                    {{-- ID REQUEST --}}
                     <td class="py-3 px-6 font-bold {{ $idColorClass }}">
                         {{ $item->request_id }}
                     </td>
 
-                    {{-- TOKO --}}
+                    {{-- NAME SALES (FIXED DIV TAG) --}}
                     <td class="py-3 px-6 font-bold uppercase text-black">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-tie mr-1 text-gray-500"></i>: {{ $item->nama_sales ?? '-' }}
+                        </div>
+                    </td>
+
+                    {{-- TOKO --}}
+                    <td class="py-3 px-6 font-bold uppercase text-black text-center">
                         {{ $item->nama_toko }}
                     </td>
 
-                    {{-- AREA (Background Warna, Teks Hitam) --}}
+                    {{-- AREA --}}
                     <td class="py-3 px-6 text-center">
                         <span class="{{ $areaBgClass }} text-black py-1 px-3 rounded text-xs font-bold block w-full border border-gray-300">
                             {{ $item->area_sales }}
@@ -64,16 +78,22 @@
                     {{-- BRAND --}}
                     <td class="py-3 px-6 text-black">{{ $item->brand }}</td>
 
-                    {{-- TOOLS --}}
-                    <td class="py-3 px-6 text-black">{{ $item->jenis_tools_branding }}</td>
+                    {{-- PERMINTAAN (TOOLS + UKURAN + LOG TIME) --}}
+                    <td class="py-3 px-6 bg-green-50/30">
+                         <div class="text-sm font-extrabold text-gray-800 uppercase">
+                            {{ $item->jenis_tools_branding }}
+                        </div>
 
-                    {{-- QTY --}}
-                    <td class="py-3 px-6 text-center font-bold text-black">{{ $item->qty_tools }}</td>
+                        {{-- Tampilkan jam jika sudah ada update status --}}
+                        @if($item->updated_at)
+                            <div class="text-[9px] text-blue-500 mt-1 font-bold italic">
+                                <i class="fas fa-clock mr-1"></i>Updated: {{ \Carbon\Carbon::parse($item->updated_at)->format('H:i') }}
+                            </div>
+                        @endif
+                    </td>
                     
                     {{-- AKSI --}}
                     <td class="py-3 px-6 text-center flex justify-center gap-2" @click.stop>
-                        
-                        {{-- TOMBOL PROSES (Kuning) --}}
                         <button type="button" 
                                 @click="showProcessModal = true; processItem = {{ json_encode($item) }}"
                                 class="w-8 h-8 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center justify-center shadow transition transform hover:scale-105" 
@@ -81,13 +101,14 @@
                             <i class="fas fa-pencil-alt"></i>
                         </button>
 
-                        {{-- TOMBOL DELETE (Merah) --}}
-                        <form action="{{ route('admin.request.destroy', ['region' => $reg, 'id' => $item->id]) }}" method="POST" onsubmit="return confirm('Hapus data ini?');">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="w-8 h-8 rounded bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow transition transform hover:scale-105" title="Hapus Data">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @if(auth()->user()->regional !== 'Design')
+                            <form action="{{ route('admin.request.destroy', ['region' => $reg, 'id' => $item->id]) }}" method="POST" onsubmit="return confirm('Hapus data ini?');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="w-8 h-8 rounded bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow transition transform hover:scale-105" title="Hapus Data">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @empty

@@ -10,6 +10,7 @@ use App\Models\Notification;      // Import Model Notifikasi
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage; 
+use App\Models\MasterData;
 
 class UserRequestController extends Controller
 {
@@ -24,10 +25,20 @@ class UserRequestController extends Controller
     // =========================================================
     // 2. HALAMAN INPUT FORM (TOMBOL "INPUT DATA")
     // =========================================================
+    // Di file: app/Http/Controllers/UserRequestController.php
+
     public function create()
     {
-        return view('user.input_request');
+        // Ambil Data Master & Grouping berdasarkan Area
+        $salesList = MasterData::where('type', 'SALES')->get()->groupBy('area');
+        $spvList   = MasterData::where('type', 'SPV')->get()->groupBy('area');
+        
+        // Ambil Tools (Tidak butuh area)
+        $toolsList = MasterData::where('type', 'TOOL')->pluck('name');
+
+        return view('user.input_request', compact('salesList', 'spvList', 'toolsList'));
     }
+
 
     // =========================================================
     // 3. PROSES SIMPAN DATA (AUTO GENERATE ID + UPLOAD FOTO)
@@ -47,9 +58,9 @@ class UserRequestController extends Controller
             
             // Validasi Foto
             'foto_area'        => 'required|array|max:5',
-            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:2048',
+            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:5120',
             'foto_sugest'      => 'nullable|array|max:5',
-            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:2048',
+            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // B. PROSES UPLOAD FOTO (LOOPING)
@@ -74,28 +85,64 @@ class UserRequestController extends Controller
             }
         }
 
-        // C. LOGIKA REGIONAL & ID GENERATOR
-        $userRegional = Auth::user()->regional;
+        // C. LOGIKA REGIONAL (PEMBAGIAN KELOMPOK YANG BENAR)
+        
+        // 1. Bersihkan Data (Biar aman dari spasi/huruf kecil)
+        $userRegional = strtoupper(trim(Auth::user()->regional)); 
+
         $newId = '';
         $model = null;
 
-        // --- SKENARIO REGIONAL 1 (BS...) ---
-        if ($userRegional == 'reg1' || $userRegional == 'Regional 1') { 
+        // --- INI KUNCINYA: DAFTAR ABSEN ANGGOTA ---
+        
+        // Siapa saja yang masuk REGIONAL 1? (Daftarkan semua disini)
+        $gengRegional1 = [
+            'REGIONAL 1', 
+            'JT',  
+            'DK',  
+            'LP',  
+            'REG1' 
+        ];
+
+        // Siapa saja yang masuk REGIONAL 2?
+        $gengRegional2 = [
+            'REGIONAL 2', 
+            'JB', 
+            'JR',
+            'REG2'
+        ];
+
+        // 2. LOGIKA PENGECEKAN (Cek Daftar Absen)
+
+        // Apakah user ada di daftar Geng Regional 1?
+        if (in_array($userRegional, $gengRegional1)) {
+            
+            // --- MASUK KE TABEL 1 (BS...) ---
             $lastItem = BrandingRequest::where('request_id', 'LIKE', 'BS%')
                         ->orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
                         ->first();
             $lastNumber = $lastItem ? (int)substr($lastItem->request_id, 2) : 0;
             $newId = 'BS' . ($lastNumber + 1);
             $model = new BrandingRequest();
+
         } 
-        // --- SKENARIO REGIONAL 2 (RB...) ---
-        else {
+        // Apakah user ada di daftar Geng Regional 2?
+        elseif (in_array($userRegional, $gengRegional2)) {
+            
+            // --- MASUK KE TABEL 2 (RB...) ---
             $lastItem = BrandingRequest2::where('request_id', 'LIKE', 'RB%')
                         ->orderByRaw('CAST(SUBSTRING(request_id, 3) AS UNSIGNED) DESC')
                         ->first();
             $lastNumber = $lastItem ? (int)substr($lastItem->request_id, 2) : 0;
             $newId = 'RB' . ($lastNumber + 1);
             $model = new BrandingRequest2();
+
+        } else {
+            
+            // --- ERROR: JIKA TIDAK TERDAFTAR DI MANAPUN ---
+            // Ini biar JT/DK/LP tidak nyasar masuk ke JB/JR lagi.
+            // Lebih baik error daripada data salah masuk.
+            dd("ERROR: Kode User '$userRegional' belum didaftarkan di Controller! Harap lapor admin.");
         }
 
         // D. SIMPAN KE DATABASE (Mapping Sesuai Kolom Anda)
@@ -137,6 +184,8 @@ class UserRequestController extends Controller
             'action_type'           => 'INPUT BARU',
             'request_id'            => $newId,
             'nama_toko'             => strtoupper($request->nama_toko),
+            'nama_sales'            => $request->nama_sales,
+            'brand'                 => $request->brand,
             'jenis_tools_branding'  => $request->jenis_tools,
             'ukuran_tools_branding' => $request->ukuran ?? '-',
             'qty_tools'             => $request->qty,
@@ -173,58 +222,54 @@ class UserRequestController extends Controller
         return view('user.revisi_request'); 
     }
 
-    // =========================================================
-    // 5. PROSES TRACKING (DENGAN JOIN STATUS)
-    // =========================================================
     public function track(Request $request)
-    {
-        $keyword = $request->input('keyword');
+{
+    $keyword = $request->input('keyword');
 
-        // Jika tidak ada keyword, kembalikan hasil kosong
-        if(!$keyword) {
-            return view('user.tracking_result', ['results' => collect([]), 'keyword' => '']);
-        }
-
-        // 1. AMBIL EMAIL USER YANG SEDANG LOGIN (KUNCI KEAMANAN)
-        $userEmail = Auth::user()->email;
-
-        // --- QUERY REGIONAL 1 (BS...) ---
-        $data1 = BrandingRequest::query()
-            ->select('branding_requests.*', 'branding_statuses.*') 
-            ->leftJoin('branding_statuses', 'branding_requests.request_id', '=', 'branding_statuses.request_id')
-            
-            // [PENTING] FILTER HANYA DATA MILIK USER INI
-            ->where('branding_requests.email_address', $userEmail)
-            
-            // BARU FILTER BERDASARKAN PENCARIAN (ID ATAU NAMA TOKO)
-            ->where(function($q) use ($keyword) {
-                $q->where('branding_requests.request_id', 'LIKE', "%$keyword%")
-                  ->orWhere('branding_requests.nama_toko', 'LIKE', "%$keyword%");
-            })
-            ->get();
-
-        // --- QUERY REGIONAL 2 (RB...) ---
-        $table2 = (new BrandingRequest2)->getTable(); 
-        
-        $data2 = BrandingRequest2::query()
-            ->select($table2.'.*', 'branding_statuses.*')
-            ->leftJoin('branding_statuses', $table2.'.request_id', '=', 'branding_statuses.request_id')
-            
-            // [PENTING] FILTER HANYA DATA MILIK USER INI
-            ->where($table2.'.email_address', $userEmail)
-            
-            // BARU FILTER BERDASARKAN PENCARIAN
-            ->where(function($q) use ($keyword, $table2) {
-                $q->where($table2.'.request_id', 'LIKE', "%$keyword%")
-                  ->orWhere($table2.'.nama_toko', 'LIKE', "%$keyword%");
-            })
-            ->get();
-        
-        // GABUNGKAN HASIL KEDUANYA
-        $results = $data1->merge($data2);
-
-        return view('user.tracking_result', compact('results', 'keyword'));
+    if(!$keyword) {
+        return view('user.tracking_result', ['results' => collect([]), 'keyword' => '']);
     }
+
+    $userEmail = Auth::user()->email;
+
+    // --- QUERY REGIONAL 1 (BS...) ---
+    $data1 = BrandingRequest::query()
+        ->select(
+            'branding_requests.*', 
+            'branding_statuses.ukuran_fix', // Mengambil kolom ukuran_fix dari tabel status
+            'branding_statuses.*', 
+            'branding_requests.created_at as req_time'
+        ) 
+        ->leftJoin('branding_statuses', 'branding_requests.request_id', '=', 'branding_statuses.request_id')
+        ->where('branding_requests.email_address', $userEmail)
+        ->where(function($q) use ($keyword) {
+            $q->where('branding_requests.request_id', 'LIKE', "%$keyword%")
+              ->orWhere('branding_requests.nama_toko', 'LIKE', "%$keyword%");
+        })
+        ->get();
+
+    // --- QUERY REGIONAL 2 (RB...) ---
+    $table2 = (new BrandingRequest2)->getTable(); 
+    $data2 = BrandingRequest2::query()
+        ->select(
+            $table2.'.*', 
+            'branding_statuses.ukuran_fix',
+            'branding_statuses.*', 
+            $table2.'.created_at as req_time'
+        )
+        ->leftJoin('branding_statuses', $table2.'.request_id', '=', 'branding_statuses.request_id')
+        ->where($table2.'.email_address', $userEmail)
+        ->where(function($q) use ($keyword, $table2) {
+            $q->where($table2.'.request_id', 'LIKE', "%$keyword%")
+              ->orWhere($table2.'.nama_toko', 'LIKE', "%$keyword%");
+        })
+        ->get();
+    
+    // Gabungkan data tanpa unique() agar setiap baris status tampil sebagai kartu terpisah
+    $results = $data1->merge($data2)->sortByDesc('req_time');
+
+    return view('user.tracking_result', compact('results', 'keyword'));
+}
 
     // =========================================================
     // 6. CEK ID UNTUK REVISI (Mencari Data)
@@ -236,9 +281,16 @@ class UserRequestController extends Controller
         ]);
 
         $id = $request->request_id;
+
+        // 1. CEK APAKAH ID SUDAH MENGANDUNG '-REV-'
+        if (str_contains($id, '-REV-')) {
+            return back()->withErrors(['request_id' => 'Data ini sudah pernah direvisi. Untuk perubahan lebih lanjut, harap hubungi Admin.']);
+        }
+
         $data = null;
         $tableType = '';
 
+        // Mencari data (kode kamu yang sudah ada)
         if (str_starts_with($id, 'BS')) {
             $data = BrandingRequest::where('request_id', $id)->first();
             $tableType = 'reg1';
@@ -247,20 +299,31 @@ class UserRequestController extends Controller
             $tableType = 'reg2';
         }
 
+        // 2. CEK APAKAH ID ASLI SUDAH PUNYA TURUNAN REVISI DI DATABASE
+        // Ini mencegah user memasukkan ID asli, padahal dia sudah pernah revisi ID itu sebelumnya
+        $cekRevisi = null;
+        if ($tableType == 'reg1') {
+            $cekRevisi = BrandingRequest::where('request_id', 'LIKE', $id . '-REV-%')->first();
+        } else {
+            $cekRevisi = BrandingRequest2::where('request_id', 'LIKE', $id . '-REV-%')->first();
+        }
+
+        if ($cekRevisi) {
+            return back()->withErrors(['request_id' => 'Anda sudah pernah mengajukan revisi untuk data ini. Harap hubungi Admin.']);
+        }
+
+        // Lanjut ke form edit jika lolos semua pengecekan
         if (!$data) {
             return back()->withErrors(['request_id' => 'ID Request tidak ditemukan!']);
         }
 
         if ($data->email_address !== Auth::user()->email) {
-            return back()->withErrors(['request_id' => 'Anda tidak memiliki akses untuk mengedit data ini!']);
+            return back()->withErrors(['request_id' => 'Anda tidak memiliki akses!']);
         }
 
         return view('user.form_edit_request', compact('data', 'tableType'));
     }
-
-    // =========================================================
-    // 7. PROSES UPDATE DATA REVISI
-    // =========================================================
+    
    // =========================================================
     // 7. PROSES UPDATE DATA REVISI (SIMPAN SEBAGAI DATA BARU)
     // =========================================================
@@ -275,9 +338,9 @@ class UserRequestController extends Controller
             'qty'              => 'required|numeric',
             
             'foto_area'        => 'nullable|array|max:5',
-            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:2048',
+            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:5120',
             'foto_sugest'      => 'nullable|array|max:5',
-            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:2048',
+            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // 2. Cari Data Asli (SOURCE)
@@ -363,6 +426,8 @@ class UserRequestController extends Controller
             'action_type'           => 'INPUT REVISI', // Tipe aksi beda
             'request_id'            => $newId,         // Catat ID Baru
             'nama_toko'             => strtoupper($request->nama_toko),
+            'nama_sales'            => $request->nama_sales,
+            'brand'                 => $request->brand,
             'jenis_tools_branding'  => $request->jenis_tools,
             'ukuran_tools_branding' => $request->ukuran ?? '-',
             'qty_tools'             => $request->qty,

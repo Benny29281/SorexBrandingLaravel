@@ -89,6 +89,24 @@ class BrandingRequestController extends Controller
         return view('admin.branding.index', compact('data1', 'data2'));
     }
 
+    public function importStatus(Request $request) 
+    {
+        $request->validate([
+            'file_status' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            Excel::import(new BrandingStatusImport, $request->file('file_status'));
+            
+            DB::commit();
+            return back()->with('success', 'Data History Status Berhasil Diimport!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal Import Status: ' . $e->getMessage());
+        }
+    }
+
     // ==========================================================
     // 4. HAPUS DATA REQUEST
     // ==========================================================
@@ -114,97 +132,142 @@ class BrandingRequestController extends Controller
     }
 
   public function storeStatus(Request $request)
-    {
-        $action = $request->input('action');
-        $reqId  = $request->input('request_id');
+{
+    $action = $request->input('action');
+    $reqId  = $request->input('request_id');
+    $statusId = $request->input('id'); 
+
+    if (!$reqId) {
+        return back()->with('error', 'Gagal: Request ID tidak ditemukan.');
+    }
+
+    // --- 1. LOGIKA HAPUS ---
+    if ($action == 'hapus') {
+        if ($statusId) {
+            \App\Models\BrandingStatus::where('id', $statusId)->delete();
+        } else {
+            \App\Models\BrandingStatus::where('request_id', $reqId)->delete();
+        }
+        return back()->with('success', 'Data status berhasil DIHAPUS!');
+    }
+
+    // --- 2. UPDATE UKURAN & SUBMISSION DATE DI TABEL ASLI ---
+    if ($reqId) {
+        $prefix  = strtoupper(substr($reqId, 0, 2));
+        $now = now(); // Ambil waktu server saat ini (jam:menit:detik)
         
-        // Ambil ID Status (Primary Key) jika ini adalah proses EDIT
-        $statusId = $request->input('id'); 
+        // Pilih Model berdasarkan Prefix Regional
+        $modelRequest = in_array($prefix, ['BS', 'JT', 'DK', 'LP']) 
+                        ? \App\Models\BrandingRequest::class 
+                        : \App\Models\BrandingRequest2::class;
 
-        if (!$reqId) {
-            return back()->with('error', 'Gagal: Request ID tidak ditemukan.');
-        }
+        // Cari data asli di tabel BrandingRequest/2
+        $existingReq = $modelRequest::where('request_id', $reqId)->first();
 
-        // --- 1. LOGIKA HAPUS ---
-        if ($action == 'hapus') {
-            if ($statusId) {
-                // Hapus 1 baris spesifik
-                BrandingStatus::where('id', $statusId)->delete();
-            } else {
-                // Hapus semua history ID ini (Opsional)
-                BrandingStatus::where('request_id', $reqId)->delete();
+        if ($existingReq) {
+            $updateParent = [];
+
+            // Update Ukuran jika ada input
+            if ($request->has('ukuran_fix') && $request->filled('ukuran_fix')) {
+                $updateParent['ukuran_tools_branding'] = $request->input('ukuran_fix');
             }
-            return back()->with('success', 'Data status berhasil DIHAPUS!');
-        }
 
-        // --- 2. UPDATE UKURAN DI TABEL ASLI (REG 1 / REG 2) ---
-        
-        if ($request->has('ukuran_tools_branding') && $request->filled('ukuran_tools_branding')) {
-            $newSize = $request->input('ukuran_tools_branding');
-            $prefix  = strtoupper(substr($reqId, 0, 2));
+            // REVISI: Logika Jam Otomatis untuk Submission Date
+            if ($request->filled('submission_date')) {
+                $newSubDate = $request->input('submission_date'); // Format: YYYY-MM-DD
+                $oldSubDate = \Carbon\Carbon::parse($existingReq->submission_date);
 
-            if (in_array($prefix, ['BS', 'JT', 'DK', 'LP'])) {
-                BrandingRequest::where('request_id', $reqId)->update(['ukuran_tools_branding' => $newSize]);
-            } elseif (in_array($prefix, ['RB', 'JB', 'JR'])) {
-                BrandingRequest2::where('request_id', $reqId)->update(['ukuran_tools_branding' => $newSize]);
-            }
-        }
-
-        // --- 3. TENTUKAN STATUS ---
-        $statusPekerjaan = 'PROSES';
-        $msg = 'Data berhasil disimpan!';
-
-        if ($action == 'selesai') {
-            $statusPekerjaan = 'SELESAI';
-        } elseif ($action == 'update') {
-            // Jika sedang Edit data lama yang sudah SELESAI, pertahankan statusnya
-            if ($statusId) {
-                $existing = BrandingStatus::find($statusId);
-                if ($existing && $existing->status_pekerjaan == 'SELESAI') {
-                    $statusPekerjaan = 'SELESAI';
+                // Jika tanggal diinput SAMA dengan tanggal lama di DB, pertahankan jam lama
+                if ($oldSubDate->format('Y-m-d') == $newSubDate) {
+                    $updateParent['submission_date'] = $oldSubDate;
+                } else {
+                    // Jika tanggal BERUBAH, tempelkan jam SEKARANG
+                    $updateParent['submission_date'] = \Carbon\Carbon::parse($newSubDate)
+                        ->setTime($now->hour, $now->minute, $now->second);
                 }
             }
-        }
 
-        // --- 4. SIAPKAN DATA ---
-        $dataToSave = [
-            'request_id'            => $reqId, 
-            'via'                   => 'WEB',
-            'pembuatan_design'      => $request->pembuatan_design,
-            'approve_leader'        => $request->approve_leader,
-            'approve_toko'          => $request->approve_toko,
-            'konfirmasi_design'     => $request->konfirmasi_design,
-            'tanggal_masuk_vendor'  => $request->tanggal_masuk_vendor,
-            'nama_vendor'           => $request->nama_vendor,
-            'sj_di_terima_tasya'    => $request->sj_di_terima_tasya,
-            'po_selesai_gudang_fr'  => $request->po_selesai_gudang_fr,
-            'packing_barang_fr'     => $request->packing_barang_fr,
-            'kirim_ke_dadap'        => $request->gudang_fr_kirim_ke_dadap, 
-            'terima_di_dadap'       => $request->barang_diterima_dadap,    
-            'kirim_ke_ekspedisi'    => $request->kirim_ke_ekspedisi,
-            'nomor_resi'            => $request->nomor_resi,
-            'konfirmasi_penerimaan' => $request->konfirmasi_penerimaan_barang, 
-            'status_pekerjaan'      => $statusPekerjaan,
-        ];
-
-        // --- 5. EKSEKUSI ---
-        try {
-            if ($statusId) {
-                // KASUS A: EDIT (Update baris yang sedang diedit saja)
-                BrandingStatus::where('id', $statusId)->update($dataToSave);
-                $msg = "Perubahan berhasil disimpan!";
-            } else {
-                // KASUS B: INPUT BARU (Create baris baru, ID boleh sama)
-                BrandingStatus::create($dataToSave);
-                $msg = "Status baru berhasil ditambahkan!";
+            // Jalankan update ke tabel BrandingRequest atau BrandingRequest2
+            if (!empty($updateParent)) {
+                $existingReq->update($updateParent);
             }
-
-            return back()->with('success', $msg);
-
-        } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi Kesalahan: ' . $e->getMessage());
         }
     }
+
+    // --- 3. TENTUKAN STATUS ---
+    $statusPekerjaan = 'PROSES';
+    $msg = 'Data berhasil disimpan!';
+
+    if ($action == 'selesai') {
+        $statusPekerjaan = 'SELESAI';
+    } elseif ($action == 'update') {
+        if ($statusId) {
+            $existing = \App\Models\BrandingStatus::find($statusId);
+            if ($existing && $existing->status_pekerjaan == 'SELESAI') {
+                $statusPekerjaan = 'SELESAI';
+            }
+        }
+    }
+
+    // --- 4. SIAPKAN DATA STATUS DENGAN LOGIKA FIX TIME ---
+    $now = now();
+    
+    // Ambil data lama dari database untuk pengecekan jam
+    $existingStatus = $statusId ? \App\Models\BrandingStatus::find($statusId) : null;
+
+    // Fungsi pembantu agar jam tidak berubah jika tanggalnya sama
+    $getFixDateTime = function($fieldName, $newDate) use ($existingStatus, $now) {
+        if (!$newDate) return null;
+
+        // Jika data lama ada untuk kolom ini
+        if ($existingStatus && $existingStatus->$fieldName) {
+            $oldFullDateTime = \Carbon\Carbon::parse($existingStatus->$fieldName);
+            
+            // Jika tanggal yang dikirim sama dengan tanggal di DB, gunakan jam yang lama
+            if ($oldFullDateTime->format('Y-m-d') == $newDate) {
+                return $oldFullDateTime; 
+            }
+        }
+
+        // Jika tanggal berubah atau data baru, gabungkan tanggal input dengan jam sekarang
+        return \Carbon\Carbon::parse($newDate)->setTime($now->hour, $now->minute, $now->second);
+    };
+
+    $dataToSave = [
+        'request_id'            => $reqId, 
+        'via'                   => 'WEB',
+        'ukuran_fix'            => $request->input('ukuran_fix'),
+        'pembuatan_design'      => $getFixDateTime('pembuatan_design', $request->pembuatan_design),
+        'approve_leader'        => $getFixDateTime('approve_leader', $request->approve_leader),
+        'approve_toko'          => $getFixDateTime('approve_toko', $request->approve_toko),
+        'konfirmasi_design'     => $getFixDateTime('konfirmasi_design', $request->konfirmasi_design),
+        'tanggal_masuk_vendor'  => $getFixDateTime('tanggal_masuk_vendor', $request->tanggal_masuk_vendor),
+        'nama_vendor'           => $request->nama_vendor,
+        'sj_di_terima_tasya'    => $getFixDateTime('sj_di_terima_tasya', $request->sj_di_terima_tasya),
+        'po_selesai_gudang_fr'  => $getFixDateTime('po_selesai_gudang_fr', $request->po_selesai_gudang_fr),
+        'packing_barang_fr'     => $request->packing_barang_fr,
+        'kirim_ke_dadap'        => $getFixDateTime('kirim_ke_dadap', $request->gudang_fr_kirim_ke_dadap), 
+        'terima_di_dadap'       => $getFixDateTime('terima_di_dadap', $request->barang_diterima_dadap),    
+        'kirim_ke_ekspedisi'    => $getFixDateTime('kirim_ke_ekspedisi', $request->kirim_ke_ekspedisi),
+        'nomor_resi'            => $request->nomor_resi,
+        'konfirmasi_penerimaan' => $getFixDateTime('konfirmasi_penerimaan', $request->konfirmasi_penerimaan_barang), 
+        'status_pekerjaan'      => $statusPekerjaan,
+    ];
+
+    // --- 5. EKSEKUSI ---
+    try {
+        if ($statusId) {
+            \App\Models\BrandingStatus::where('id', $statusId)->update($dataToSave);
+            $msg = "Status berhasil di update";
+        } else {
+            \App\Models\BrandingStatus::create($dataToSave);
+            $msg = "Status baru berhasil ditambahkan!";
+        }
+        return back()->with('success', $msg);
+    } catch (\Exception $e) {
+        return back()->with('error', 'Terjadi Kesalahan: ' . $e->getMessage());
+    }
+}
 
     // ==========================================================
     // 7. FUNGSI HALAMAN STATUS BRANDING (REVISI ROBUST)

@@ -169,9 +169,6 @@ class BrandingRequest2Controller extends Controller
     // ==========================================================
     // 6. SIMPAN / UPDATE STATUS (LOGIKA UTAMA)
     // ==========================================================
-    // ==========================================================
-    // 6. SIMPAN / UPDATE STATUS (LOGIKA AMAN & TIDAK MERUSAK DATA ASLI)
-    // ==========================================================
     public function storeStatus(Request $request)
     {
         // 1. Ambil Action (Simpan / Selesai / Revisi / Hapus)
@@ -220,7 +217,8 @@ class BrandingRequest2Controller extends Controller
                 [
                     // DATA YANG AKAN DISIMPAN KE TABEL STATUS SAJA
                     'via'                   => 'WEB',
-                    
+
+                    'ukuran_fix'            => $request->input('ukuran_fix'),
                     'pembuatan_design'      => $request->pembuatan_design,
                     'approve_leader'        => $request->approve_leader,
                     'approve_toko'          => $request->approve_toko,

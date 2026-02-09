@@ -53,7 +53,12 @@
     </style>
 </head>
 
-{{-- TAMBAHKAN 'showProfileModal' KE X-DATA --}}
+{{-- LOGIC PHP SEDERHANA DI VIEW UNTUK MEMUDAHKAN PENGECEKAN --}}
+@php
+    $userReg = strtoupper(trim(Auth::user()->regional));
+    $isReg1 = in_array($userReg, ['JT', 'DK', 'LP', 'REGIONAL 1', 'REG1']);
+@endphp
+
 <body x-data="{ open: false, showModalDownload: false, showProfileModal: false }" class="bg-sorex min-h-screen flex flex-col relative overflow-x-hidden selection:bg-red-200 selection:text-red-900">
 
     {{-- BACKGROUND --}}
@@ -91,18 +96,13 @@
             
             <div class="border-l border-red-300 h-6 mx-2"></div>
             
-            {{-- === PROFILE BULAT (KLIK -> MUNCUL POPUP) === --}}
+            {{-- PROFILE --}}
             <div class="relative group cursor-pointer mr-2" @click="showProfileModal = true">
                 <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg bg-red-800 transform group-hover:scale-110 transition duration-300">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true" 
                          alt="Profile" class="w-full h-full object-cover">
                 </div>
-                {{-- Tooltip Kecil saat hover --}}
-                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
-                    Lihat Profil
-                </div>
             </div>
-            {{-- === END PROFILE === --}}
 
             <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
@@ -113,17 +113,9 @@
         </nav>
 
         {{-- Menu Mobile --}}
-        <div x-show="open" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 -translate-y-full"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0"
-             x-transition:leave-end="opacity-0 -translate-y-full"
-             x-cloak
-             class="absolute top-0 left-0 w-full bg-red-900/95 backdrop-blur-md shadow-2xl md:hidden pt-24 pb-8 px-6 flex flex-col space-y-4 text-center z-40 border-b border-red-700">
+        <div x-show="open" x-cloak class="absolute top-0 left-0 w-full bg-red-900/95 backdrop-blur-md shadow-2xl md:hidden pt-24 pb-8 px-6 flex flex-col space-y-4 text-center z-40 border-b border-red-700">
             
-            {{-- Profile Mobile (Langsung Tampil) --}}
+            {{-- Profile Mobile --}}
             <div class="flex flex-col items-center mb-4 border-b border-red-800 pb-4">
                 <div class="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-2 bg-red-800 shadow-xl">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true" 
@@ -169,22 +161,34 @@
                 
                 {{-- Card Input --}}
                 <div class="bg-white p-6 rounded-3xl shadow-xl w-full max-w-sm border border-gray-100 transform hover:scale-[1.02] transition duration-300">
+                    
+                    {{-- BAGIAN ATAS: INPUT --}}
                     <div class="mb-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-2">Input Data Branding</h3>
+                        
                         <a href="{{ route('user.request.create') }}" class="btn-sorex text-white w-full py-3 rounded-xl font-bold shadow-lg shadow-red-200 flex items-center justify-center group">
-                            <span>@if(Auth::user()->regional == 'reg1' || Auth::user()->regional == 'Regional 1') JT, DK & LP @else JB & JR @endif</span>
+                            {{-- PANGGIL LANGSUNG REGIONAL USER (HURUF BESAR) --}}
+                            <span>
+                                Input Data {{ strtoupper(Auth::user()->regional) }}
+                            </span>
                             <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition"></i>
                         </a>
                     </div>
+
                     <div class="border-t border-gray-100 my-4 relative">
                         <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-400 font-bold uppercase">Atau</span>
                     </div>
+
+                    {{-- BAGIAN BAWAH: REVISI --}}
                     <div class="text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-2">Revisi Data Branding</h3>
+                        
                         <a href="{{ route('user.request.revisi') }}" class="block w-full py-3 rounded-xl font-bold border-2 border-sorex text-sorex hover:bg-red-50 transition">
-                            @if(Auth::user()->regional == 'reg1' || Auth::user()->regional == 'Regional 1') JT, DK & LP @else JB & JR @endif
+                            {{-- PANGGIL LANGSUNG REGIONAL USER --}}
+                            Revisi Data {{ strtoupper(Auth::user()->regional) }}
                         </a>
                     </div>
+
                 </div>
 
                 {{-- Card Tracking --}}
@@ -192,7 +196,11 @@
                     <h3 class="text-lg font-bold text-gray-700 mb-1 flex items-center"><i class="fas fa-search text-sorex mr-2"></i> Tracking Data Request</h3>
                     <p class="text-xs text-gray-500 mb-4">Cari berdasarkan ID Request, Toko, atau Sales</p>
                     <form action="{{ route('user.request.track') }}" method="GET" class="relative">
-                        <input type="text" name="keyword" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition text-sm font-medium" placeholder="Kode: @if(Auth::user()->regional == 'reg1' || Auth::user()->regional == 'Regional 1') BS... @else RB... @endif">
+                        
+                        {{-- INPUT SEARCH (SUDAH DIPERBAIKI) --}}
+                        <input type="text" name="keyword" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition text-sm font-medium" 
+                               placeholder="Kode: @if($isReg1) BS... @else RB... @endif">
+                        
                         <button type="submit" class="absolute right-2 top-2 bottom-2 bg-sorex text-white px-3 rounded-lg hover:bg-red-800 transition"><i class="fas fa-search"></i></button>
                     </form>
                 </div>
@@ -206,61 +214,12 @@
         &copy; 2025 SOREX Branding System. All Rights Reserved.
     </footer>
 
-    {{-- =======================================================
-         1. MODAL POPUP PROFILE (BARU DITAMBAHKAN)
-         ======================================================= --}}
-    <div x-show="showProfileModal" style="display: none;" 
-         class="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-90"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-90">
-        
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 relative flex flex-col items-center text-center" @click.away="showProfileModal = false">
-            
-            {{-- Tombol Close --}}
-            <button @click="showProfileModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-
-            {{-- Foto Besar --}}
-            <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-red-100 shadow-xl mb-4">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true&size=128" 
-                     alt="Profile" class="w-full h-full object-cover">
-            </div>
-
-            {{-- Info User --}}
-            <h2 class="text-2xl font-bold text-gray-800 mb-1">{{ Auth::user()->name }}</h2>
-            <div class="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
-                {{ Auth::user()->regional ?? 'User' }}
-            </div>
-            
-            <div class="w-full border-t border-gray-100 pt-4">
-                <p class="text-gray-500 text-sm mb-1">Alamat Email:</p>
-                <p class="text-gray-800 font-medium break-all">{{ Auth::user()->email }}</p>
-            </div>
-
-            <button @click="showProfileModal = false" class="mt-6 w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition">
-                Tutup
-            </button>
-        </div>
-    </div>
-
-    {{-- =======================================================
-         2. MODAL DOWNLOAD DATA
-         ======================================================= --}}
+    {{-- MODAL DOWNLOAD --}}
     <div x-show="showModalDownload" style="display: none;" 
          class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
+         x-cloak>
         
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative transform transition-all scale-100" @click.away="showModalDownload = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative" @click.away="showModalDownload = false">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center">
                     <div class="bg-green-100 p-2 rounded-lg mr-3">
@@ -275,33 +234,25 @@
 
             <form action="{{ route('user.download.status') }}" method="GET">
                 <div class="space-y-4">
+                    {{-- INPUT AREA OTOMATIS BERDASARKAN USER (HIDDEN) --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Area</label>
-                        <div class="relative">
-                            <select name="area" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 appearance-none focus:ring-2 focus:ring-green-500 focus:outline-none transition font-medium text-gray-700 cursor-pointer">
-                                <option value="ALL">Semua Area Saya</option>
-                                @if(Auth::user()->regional == 'reg1' || Auth::user()->regional == 'Regional 1')
-                                    <option value="JT">(JT)</option>
-                                    <option value="DK">(DK)</option>
-                                    <option value="LP">(LP)</option>
-                                @else
-                                    <option value="JB">(JB)</option>
-                                    <option value="JR">(JR)</option>
-                                @endif
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Area Download</label>
+                        <div class="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 font-bold text-sorex">
+                            <i class="fas fa-map-marker-alt mr-2"></i> AREA {{ strtoupper(Auth::user()->regional) }}
                         </div>
+                        <input type="hidden" name="area" value="{{ strtoupper(Auth::user()->regional) }}">
+                        <p class="text-[10px] text-gray-500 mt-1 italic">*Data yang didownload otomatis sesuai dengan area tugas Anda.</p>
                     </div>
+
+                    {{-- Date Input --}}
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Dari</label>
-                            <input type="date" name="start_date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-green-500 focus:outline-none transition text-sm">
+                            <input type="date" name="start_date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-3">
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">Sampai</label>
-                            <input type="date" name="end_date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-green-500 focus:outline-none transition text-sm">
+                            <input type="date" name="end_date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-3">
                         </div>
                     </div>
                 </div>
@@ -310,6 +261,32 @@
                     <button type="submit" class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition flex items-center justify-center"><i class="fas fa-download mr-2"></i> Download</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- MODAL PROFILE --}}
+    <div x-show="showProfileModal" style="display: none;" 
+         class="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4"
+         x-cloak>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 relative flex flex-col items-center text-center" @click.away="showProfileModal = false">
+            <button @click="showProfileModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-red-100 shadow-xl mb-4">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random&color=fff&bold=true&size=128" 
+                     alt="Profile" class="w-full h-full object-cover">
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-1">{{ Auth::user()->name }}</h2>
+            <div class="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
+                {{ Auth::user()->regional ?? 'User' }}
+            </div>
+            <div class="w-full border-t border-gray-100 pt-4">
+                <p class="text-gray-500 text-sm mb-1">Alamat Email:</p>
+                <p class="text-gray-800 font-medium break-all">{{ Auth::user()->email }}</p>
+            </div>
+            <button @click="showProfileModal = false" class="mt-6 w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition">
+                Tutup
+            </button>
         </div>
     </div>
 
@@ -322,7 +299,5 @@
             Swal.fire({ icon: 'error', title: 'Gagal', text: "{{ session('error') ?? 'Terjadi kesalahan input.' }}", confirmButtonColor: '#d71920' });
         @endif
     </script>
-
-    @include('components.keep-alive')
 </body>
 </html>

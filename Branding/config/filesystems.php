@@ -60,6 +60,20 @@ return [
             'report' => false,
         ],
 
+            'google' => [
+            'driver' => 'google',
+            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+            'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+            
+            // --- UBAH BAGIAN INI ---
+            // Jangan pakai env(), langsung paste ID folder "tetsing" Anda di sini
+            'folderId' => '1xQGidpKYOqIuYl4hjLgIuHy5HJeJpjUf    ', 
+            // -----------------------
+
+            'serviceAccountCredentials' => storage_path('app/google-drive/service-account.json'),
+        ],
+
     ],
 
     /*

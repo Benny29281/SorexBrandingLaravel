@@ -18,6 +18,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/app/google-drive/*.json
+GOOGLE_DRIVE_FOLDER_ID=1DIEVyDaMkrxPmOoxq1SusHzfggtH6wMN
 /vendor
 Homestead.json
 Homestead.yaml

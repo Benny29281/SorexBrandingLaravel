@@ -28,115 +28,155 @@
         @include('layouts.header_admin')
 
         {{-- 3. KONTEN UTAMA --}}
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 flex flex-col justify-center items-center">
             
-            <div class="flex flex-col justify-center items-center min-h-[80vh]">
+            {{-- Notifikasi Sukses --}}
+            @if(session('success'))
+                <div class="w-full max-w-5xl bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm flex items-center">
+                    <i class="fas fa-check-circle mr-3 text-lg"></i> 
+                    <span class="font-semibold">{{ session('success') }}</span>
+                </div>
+            @endif
+            
+            {{-- Validasi Error --}}
+            @if ($errors->any())
+                <div class="w-full max-w-5xl bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- KARTU REGISTER (WIDE LAPTOP MODE) --}}
+            {{-- max-w-5xl membuat form lebar tapi menyisakan ruang di kiri kanan --}}
+            <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                 
-                {{-- Notifikasi Sukses --}}
-                @if(session('success'))
-                    <div class="w-full max-w-md bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm animate-fade-in-down">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle mr-2 text-lg"></i>
-                            <p>{{ session('success') }}</p>
-                        </div>
+                {{-- Header Kartu --}}
+                <div class="bg-gray-800 px-8 py-5 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-wide">Register User Baru</h2>
+                        <p class="text-gray-400 text-sm mt-1">Form pendaftaran untuk akses admin atau staff regional</p>
                     </div>
-                @endif
-                
-                {{-- Validasi Error Global --}}
-                @if ($errors->any())
-                    <div class="w-full max-w-md bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>- {{ $error }}</li>
-                            @endforeach
-                        </ul>
+                    <div class="bg-gray-700 p-3 rounded-full text-white shadow-inner">
+                        <i class="fas fa-user-plus text-xl"></i>
                     </div>
-                @endif
+                </div>
 
-                {{-- KARTU REGISTER --}}
-                <div class="w-full max-w-md bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-                    
-                    {{-- Header Kartu --}}
-                    <div class="bg-gray-800 px-8 py-6 text-center">
-                        <h2 class="text-2xl font-bold text-white mb-1">Register User Baru</h2>
-                        <p class="text-gray-400 text-sm">Tambahkan admin atau staff regional</p>
-                    </div>
+                {{-- Body Form --}}
+                <div class="p-8">
+                    <form method="POST" action="{{ route('admin.register.store') }}">
+                        @csrf
 
-                    {{-- Body Form --}}
-                    <div class="p-8">
-                        <form method="POST" action="{{ route('admin.register.store') }}">
-                            @csrf
+                        {{-- GRID LAYOUT: 2 KOLOM AGAR HEMAT TEMPAT VERTIKAL --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                            
+                            {{-- KOLOM KIRI --}}
+                            <div class="space-y-6">
+                                {{-- Nama Lengkap --}}
+                                <div>
+                                    <label class="block text-gray-700 font-bold mb-2" for="name">Nama Lengkap</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <input class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-gray-50 focus:bg-white transition text-gray-700" 
+                                               id="name" type="text" name="name" placeholder="Masukkan nama lengkap user" required>
+                                    </div>
+                                </div>
 
-                            {{-- Nama Lengkap --}}
-                            <div class="mb-5">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                                    <i class="fas fa-user text-gray-400 mr-1"></i> Nama Lengkap
-                                </label>
-                                <input class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200" 
-                                       id="name" type="text" name="name" placeholder="Contoh: Budi Santoso" required>
-                            </div>
-
-                            {{-- Email --}}
-                            <div class="mb-5">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                                    <i class="fas fa-envelope text-gray-400 mr-1"></i> Email Address
-                                </label>
-                                <input class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200" 
-                                       id="email" type="email" name="email" placeholder="nama@sorex.co.id" required>
-                            </div>
-
-                            {{-- PILIHAN REGIONAL (DROP DOWN) --}}
-                            <div class="mb-5">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="regional">
-                                    <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i> Pilih Regional
-                                </label>
-                                <div class="relative">
-                                    <select class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200 appearance-none bg-white" 
-                                            id="regional" name="regional" required>
-                                        <option value="" disabled selected>-- Pilih Regional --</option>
-                                        <option value="Regional 1">Regional 1 (JT, DK, LP)</option>
-                                        <option value="Regional 2">Regional 2 (JB & JR)</option>
-                                        {{-- Tambahkan opsi lain jika perlu, misal Admin --}}
-                                        <option value="Admin">Admin</option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                {{-- Password --}}
+                                <div>
+                                    <label class="block text-gray-700 font-bold mb-2" for="password">Password</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <i class="fas fa-lock"></i>
+                                        </div>
+                                        <input class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-gray-50 focus:bg-white transition text-gray-700" 
+                                               id="password" type="password" name="password" placeholder="********" required>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Password --}}
-                            <div class="mb-5">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-                                    <i class="fas fa-lock text-gray-400 mr-1"></i> Password
-                                </label>
-                                <input class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200" 
-                                       id="password" type="password" name="password" placeholder="********" required>
-                            </div>
+                            {{-- KOLOM KANAN --}}
+                            <div class="space-y-6">
+                                {{-- Email --}}
+                                <div>
+                                    <label class="block text-gray-700 font-bold mb-2" for="email">Email Address</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <input class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-gray-50 focus:bg-white transition text-gray-700" 
+                                               id="email" type="email" name="email" placeholder="contoh@sorex.co.id" required>
+                                    </div>
+                                </div>
 
-                            {{-- Konfirmasi Password --}}
-                            <div class="mb-8">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="password_confirmation">
-                                    <i class="fas fa-lock text-gray-400 mr-1"></i> Konfirmasi Password
-                                </label>
-                                <input class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200" 
-                                       id="password_confirmation" type="password" name="password_confirmation" placeholder="Ulangi password" required>
+                                {{-- Konfirmasi Password --}}
+                                <div>
+                                    <label class="block text-gray-700 font-bold mb-2" for="password_confirmation">Ulangi Password</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <input class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-gray-50 focus:bg-white transition text-gray-700" 
+                                               id="password_confirmation" type="password" name="password_confirmation" placeholder="********" required>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
 
-                            {{-- Tombol Submit --}}
-                            <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-300 flex justify-center items-center group" type="submit">
-                                <i class="fas fa-user-plus mr-2 group-hover:scale-110 transition-transform"></i> Tambahkan User
+                        {{-- REGIONAL (FULL WIDTH) --}}
+                        <div class="mb-8">
+                            <label class="block text-gray-700 font-bold mb-2" for="regional">Regional / Role</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <select class="w-full pl-11 pr-10 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-gray-50 focus:bg-white transition appearance-none cursor-pointer font-medium text-gray-700" 
+                                        id="regional" name="regional" required>
+                                    <option value="" disabled selected>-- Pilih Wilayah Akses --</option>
+                                    
+                                    <optgroup label="Regional 1">
+                                            <option value="JT">(JT)</option>
+                                            <option value="DK">(DK)</option>
+                                            <option value="LP">(LP)</option>
+                                        </optgroup>
+
+                                        {{-- KELOMPOK REGIONAL 2 --}}
+                                        <optgroup label="Regional 2">
+                                            <option value="JB">(JB)</option>
+                                            <option value="JR">(JR)</option>
+                                        </optgroup>
+
+                                        {{-- KELOMPOK PUSAT --}}
+                                        <optgroup label="Pusat / Management">
+                                            <option value="Design">Staff Design</option> 
+                                            <option value="Admin">Super Admin</option>
+                                        </optgroup>
+                                </select>
+                                {{-- Panah Dropdown --}}
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-600">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Footer Form (Tombol) --}}
+                        <div class="flex items-center justify-end border-t border-gray-100 pt-6">
+                            <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition duration-300 flex items-center transform hover:-translate-y-0.5" type="submit">
+                                <i class="fas fa-save mr-2"></i> Simpan Data User
                             </button>
+                        </div>
 
-                        </form>
-                    </div>
+                    </form>
                 </div>
-
-                <p class="text-center text-gray-500 text-xs mt-6">
-                    &copy; {{ date('Y') }} Sorex System. All rights reserved.
-                </p>
-
             </div>
+
+            <p class="text-center text-gray-400 text-sm mt-6">
+                &copy; {{ date('Y') }} Sorex System. Managed by Admin IT.
+            </p>
 
         </main>
     </div>

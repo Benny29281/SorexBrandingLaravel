@@ -46,4 +46,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // di file app/Models/User.php
+    public function isAdmin() {
+        return $this->regional === 'Admin';
+    }
+
+    public function isDesign() {
+        return $this->regional === 'Design';
+    }
 }

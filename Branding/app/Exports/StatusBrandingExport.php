@@ -53,9 +53,9 @@ class StatusBrandingExport implements FromCollection, WithHeadings, WithMapping,
         return [
             'TGL REQUEST', 'ID REQUEST', 'SALES', 'TOKO', 'AREA', 
             'BRAND', 'TOOLS', 'QTY',
-            'DRAFT DESIGN', 'ACC LEADER', 'ACC TOKO', 'KONF. DESIGN',
+            'PEMBUATAN DESIGN', 'ACC LEADER', 'ACC TOKO', 'KONFIRMASI DESIGN',
             'MASUK VENDOR', 'NAMA VENDOR',
-            'TERIMA TASYA', 'SELESAI GUDANG', 'PACKING', 'KIRIM DADAP', 'TERIMA DADAP', 'KIRIM EKSPEDISI',
+            'SJ DI TERIMA TASYA', 'PO SELESAI & KEGUDANG FR', 'PACKING DI GUDANG FR', 'KIRIM KE DADAP', 'TERIMA DI DADAP', 'KIRIM EKSPEDISI',
             'NO RESI', 'TGL TERIMA TOKO'
         ];
     }
@@ -70,6 +70,10 @@ class StatusBrandingExport implements FromCollection, WithHeadings, WithMapping,
         if (!$req) {
             return []; 
         }
+
+        $formatDT = function($date) {
+        return $date ? \Carbon\Carbon::parse($date)->format('d-m-Y H:i:s') : '-';
+    };
 
         return [
             $req->submission_date,

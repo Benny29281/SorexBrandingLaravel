@@ -25,5 +25,13 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
             'regional' => 'ALL', // Admin bisa akses semua (bebas diisi)
         ]);
+
+        // User::create([
+        //     'name' => 'Admin',
+        //     'email' => env('ADMIN_EMAIL'),
+        //     'password' => Hash::make(env('ADMIN_PASSWORD')),
+        //     'role' => 'admin',
+        //     'regional' => 'ALL',
+        // ]);
     }
 }

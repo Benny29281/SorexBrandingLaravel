@@ -45,13 +45,13 @@ class userStatusBrandingExport implements FromCollection, WithHeadings, WithMapp
             'BRAND', 'TOOLS', 'QTY', 'UKURAN', 'KETERANGAN',
             
             // STATUS DESIGN
-            'DRAFT DESIGN', 'ACC LEADER', 'ACC TOKO', 'KONF. DESIGN',
+            'PEMBUATAN DESIGN', 'ACC LEADER', 'ACC TOKO', 'KONFIRMASI DESIGN',
             
             // STATUS VENDOR
             'MASUK VENDOR', 'NAMA VENDOR',
             
             // LOGISTIK
-            'TERIMA TASYA', 'SELESAI GUDANG', 'PACKING', 'KIRIM DADAP', 'TERIMA DADAP', 'KIRIM EKSPEDISI',
+            'SJ DI TERIMA TASYA', 'PO SELESAI & KEGUDANG FR', 'PACKING DIGUDANG FR', 'KIRIM KE DADAP', 'TERIMA DI DADAP', 'KIRIM EKSPEDISI',
             
             // RESI
             'NO RESI', 'TGL TERIMA TOKO'
@@ -62,6 +62,10 @@ class userStatusBrandingExport implements FromCollection, WithHeadings, WithMapp
     public function map($item): array
     {
         $req = $item->parent_data;
+
+        $formatDT = function($date) {
+        return $date ? \Carbon\Carbon::parse($date)->format('d-m-Y H:i:s') : '-';
+    };
 
         return [
             // DATA REQUEST

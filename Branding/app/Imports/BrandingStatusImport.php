@@ -85,6 +85,7 @@ class BrandingStatusImport implements ToModel, WithHeadingRow
             ['request_id' => $reqId], 
             [
                 'via'                   => $row['s'] ?? 'EXCEL',
+                'ukuran_fix'            => $row['ukuran_asli'] ?? $row['ukuran'] ?? null,
                 'pembuatan_design'      => $this->transformDate($row['pembuatan_design'] ?? null),
                 'approve_leader'        => $this->transformDate($row['approve_leader'] ?? null),
                 'approve_toko'          => $this->transformDate($row['approve_toko'] ?? null),
@@ -93,7 +94,7 @@ class BrandingStatusImport implements ToModel, WithHeadingRow
                 'nama_vendor'           => $row['nama_vendor'] ?? null, 
                 'sj_di_terima_tasya'    => $this->transformDate($row['sj_di_terima_tasya'] ?? null),
                 'po_selesai_gudang_fr'  => $this->transformDate($row['po_selesai_dikirim_ke_gudang_fr'] ?? $row['po_selesai_ke_gudang_fr'] ?? null),
-                'packing_barang_fr'     => $row['packing_barang_fr'] ?? null,, 
+                'packing_barang_fr'     => $row['packing_barang_fr'] ?? null,
                 'kirim_ke_dadap'        => $this->transformDate($row['gudang_fr_kirim_ke_dadap'] ?? null),
                 'terima_di_dadap'       => $this->transformDate($row['barang_di_terima_dadap'] ?? null),
                 'kirim_ke_ekspedisi'    => $this->transformDate($row['kirim_ke_ekspedisi'] ?? null),

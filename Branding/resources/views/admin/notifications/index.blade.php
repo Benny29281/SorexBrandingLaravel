@@ -8,8 +8,6 @@
     {{-- Tailwind & FontAwesome --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    {{-- Alpine.js --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
@@ -18,6 +16,12 @@
         .bg-header { background-color: #2b2b2b; }
         body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
         [x-cloak] { display: none !important; }
+        
+        /* Custom Scrollbar Tipis */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden font-sans">
@@ -31,94 +35,115 @@
         {{-- HEADER --}}
         @include('layouts.header_admin')
     
-        {{-- ISI KONTEN (SCROLLABLE) --}}
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+        {{-- ISI KONTEN --}}
+        <main class="flex-1 overflow-hidden bg-white flex flex-col">
             
-            {{-- Container Utama: Padding disesuaikan agar sejajar --}}
-            <div class="container mx-auto px-6 py-8">
-                
-                {{-- HEADER KONTEN (Judul & Tombol) --}}
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800">Semua Notifikasi</h1>
-                        <p class="text-gray-500 text-sm mt-1">Lihat seluruh riwayat aktivitas sistem.</p>
+            {{-- HEADER PAGE --}}
+            <div class="bg-white border-b border-gray-200 px-6 py-3 shadow-sm flex justify-between items-center z-10 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-red-600 p-2 rounded-lg text-white">
+                        <i class="fas fa-bell text-lg"></i>
                     </div>
-                    
-                    <a href="{{ route('notification.read.all') }}" class="bg-white text-gray-700 px-5 py-2.5 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 text-sm font-bold transition flex items-center group">
-                        <i class="fas fa-check-double mr-2 text-blue-500 group-hover:text-blue-600"></i> Tandai Semua Dibaca
-                    </a>
+                    <div>
+                        <h1 class="text-lg font-bold text-black leading-none">Pusat Notifikasi</h1>
+                        <p class="text-xs text-black font-medium mt-1">Total: <b>{{ $notifications->total() }}</b> aktivitas</p>
+                    </div>
                 </div>
+                
+                <a href="{{ route('notification.read.all') }}" class="text-xs font-bold text-black bg-gray-100 hover:bg-gray-200 border border-gray-300 px-3 py-1.5 rounded-lg transition flex items-center shadow-sm whitespace-nowrap">
+                    <i class="fas fa-check-double mr-1.5"></i> Tandai Semua Dibaca
+                </a>
+            </div>
 
-                {{-- LIST NOTIFIKASI --}}
-                <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+            {{-- LIST NOTIFIKASI --}}
+            <div class="flex-1 overflow-y-auto custom-scroll p-0">
+                <div class="bg-white divide-y divide-gray-100">
+                    
                     @forelse($notifications as $notif)
-                        <div class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition duration-150 {{ $notif->is_read ? 'bg-white' : 'bg-blue-50/40' }}">
-                            <a href="{{ route('notification.read', $notif->id) }}" class="block p-5 group">
-                                <div class="flex items-start">
-                                    
-                                    {{-- Ikon --}}
-                                    <div class="flex-shrink-0 pt-1">
-                                        <div class="w-12 h-12 rounded-full flex items-center justify-center transition-colors 
-                                            {{ $notif->is_read ? 'bg-gray-100 text-gray-400 group-hover:bg-gray-200' : 
-                                            ($notif->type == 'PENGIRIMAN' ? 'bg-green-100 text-green-600' : 
-                                            ($notif->type == 'REVISI' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600 shadow-sm')) 
-                                            }}">
-                                            <i class="fas 
-                                                @if($notif->type == 'REVISI') fa-edit 
-                                                @elseif($notif->type == 'PENGIRIMAN') fa-truck 
-                                                @else fa-bell 
-                                                @endif 
-                                                text-lg">
-                                            </i>
-                                        </div>
+                        @php
+                            // Tentukan Warna Background Ikon (Ikonnya tetap Lonceng)
+                            // Agar tetap ada pembeda visual sedikit namun seragam bentuknya
+                            $iconBg = 'bg-blue-100 text-blue-600'; // Default Biru
+                            
+                            if ($notif->type == 'REVISI') {
+                                $iconBg = 'bg-orange-100 text-orange-600'; // Revisi = Orange
+                            } elseif (str_contains(strtoupper($notif->title), 'BARU')) {
+                                $iconBg = 'bg-green-100 text-green-600'; // Baru = Hijau
+                            }
+
+                            // Style Baris (Belum Dibaca = Background agak gelap + Border kiri)
+                            $rowClass = $notif->is_read ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 border-l-4 border-l-blue-600';
+                            $paddingClass = $notif->is_read ? 'pl-4' : 'pl-3'; 
+                        @endphp
+
+                        {{-- ITEM NOTIFIKASI --}}
+                        <a href="{{ route('notification.read', $notif->id) }}" class="block {{ $rowClass }} border-b border-gray-100 last:border-0 transition duration-150 group">
+                            <div class="py-3 pr-4 {{ $paddingClass }} flex items-center gap-3">
+                                
+                                {{-- 1. Ikon Lonceng (Semua sama) --}}
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs {{ $iconBg }}">
+                                        <i class="fas fa-bell"></i> {{-- ICON LONCENG --}}
                                     </div>
+                                </div>
+
+                                {{-- 2. Konten Teks (Hitam Semua) --}}
+                                <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 gap-1 md:gap-4 items-center">
                                     
-                                    {{-- Teks Konten --}}
-                                    <div class="ml-4 flex-1">
-                                        <div class="flex justify-between items-start">
-                                            <h4 class="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                                                {{ $notif->title }}
-                                            </h4>
-                                            <span class="text-xs text-gray-400 whitespace-nowrap ml-2 bg-gray-100 px-3 py-1 rounded-full flex items-center">
-                                                <i class="far fa-clock mr-1"></i> {{ $notif->created_at->diffForHumans() }}
-                                            </span>
-                                        </div>
-                                        <p class="text-sm text-gray-600 mt-1 leading-relaxed">{{ $notif->message }}</p>
+                                    {{-- Judul --}}
+                                    <div class="md:col-span-3">
+                                        <h4 class="text-sm font-extrabold text-black truncate">
+                                            {{ $notif->title }}
+                                        </h4>
                                     </div>
 
-                                    {{-- Titik Biru (Unread) --}}
+                                    {{-- Pesan --}}
+                                    <div class="md:col-span-7">
+                                        <p class="text-xs font-medium text-black truncate">
+                                            {{ $notif->message }}
+                                        </p>
+                                    </div>
+
+                                    {{-- Waktu --}}
+                                    <div class="md:col-span-2 text-right">
+                                        <span class="text-[10px] font-bold text-black whitespace-nowrap bg-gray-200 px-2 py-0.5 rounded-full">
+                                            {{ $notif->created_at->diffForHumans() }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {{-- 3. Arrow Indicator --}}
+                                <div class="flex-shrink-0 w-4 text-center">
                                     @if(!$notif->is_read)
-                                        <div class="ml-4 pt-4 flex flex-col items-center">
-                                            <div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-lg shadow-blue-500/50"></div>
-                                            <span class="text-[10px] text-blue-500 font-bold mt-1">Baru</span>
-                                        </div>
+                                        <div class="w-2 h-2 bg-blue-600 rounded-full mx-auto animate-pulse"></div>
+                                    @else
+                                        <i class="fas fa-chevron-right text-black text-xs opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                     @endif
                                 </div>
-                            </a>
-                        </div>
-                    @empty
-                        <div class="p-16 text-center text-gray-400 flex flex-col items-center justify-center">
-                            <div class="bg-gray-50 p-4 rounded-full mb-4">
-                                <i class="fas fa-bell-slash text-4xl text-gray-300"></i>
+
                             </div>
-                            <h4 class="text-lg font-bold text-gray-500">Tidak ada notifikasi</h4>
-                            <p class="text-sm mt-1">Semua aktivitas sistem akan muncul di sini.</p>
+                        </a>
+                    @empty
+                        {{-- STATE KOSONG --}}
+                        <div class="py-20 text-center flex flex-col items-center justify-center">
+                            <div class="bg-gray-100 p-4 rounded-full mb-3">
+                                <i class="fas fa-bell-slash text-3xl text-black"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-black">Belum ada notifikasi</h4>
                         </div>
                     @endforelse
+
                 </div>
 
                 {{-- Pagination --}}
-                <div class="mt-8">
-                    {{ $notifications->links() }}
-                </div>
+                @if($notifications->hasPages())
+                    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        {{ $notifications->links() }}
+                    </div>
+                @endif
+            </div>
 
-            </div> {{-- End Container --}}
         </main>
-
-        {{-- Footer --}}
-        <footer class="w-full bg-white text-center text-xs p-4 text-gray-500 border-t shadow-inner z-10">
-            &copy; 2025 SOREX Admin System. All Rights Reserved.
-        </footer>
     </div>
     
     @include('components.keep-alive')

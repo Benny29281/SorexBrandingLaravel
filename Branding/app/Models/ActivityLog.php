@@ -14,9 +14,11 @@ class ActivityLog extends Model
         'action_type',
         'request_id',            // Sesuai nama kolom Anda
         'nama_toko',
+        'nama_sales',
         'jenis_tools_branding',  // Sesuai nama kolom Anda
         'ukuran_tools_branding', // Sesuai nama kolom Anda
         'qty_tools',             // Sesuai nama kolom Anda
+        'brand', 
         'keterangan_tambahan',   // Sesuai nama kolom Anda
     ];
 }
