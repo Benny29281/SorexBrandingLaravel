@@ -18,12 +18,18 @@
             @forelse($data as $item)
                 @php
                     // LOGIKA WARNA ID
-                    $idColorClass = 'text-gray-700'; 
-                    if (str_contains($item->request_id, 'BS')) {
-                        $idColorClass = 'text-red-600'; 
-                    } elseif (str_contains($item->request_id, 'RB')) {
-                        $idColorClass = 'text-green-600';
-                    }
+                    // LOGIKA WARNA ID berdasarkan siapa yang terakhir update
+                    // Ganti angka ID sesuai user asli di database kamu
+                    $userColorMap = [
+                        26 => 'bg-blue-200 text-blue-800',    // Design User A
+                        27 => 'bg-green-200 text-green-800',  // Design User B
+                        1 => 'bg-pink-200 text-pink-800',    // Admin
+                        5 => 'bg-yellow-200 text-yellow-800', // tambah user lain sesuai kebutuhan
+                    ];
+
+                    $idColorClass = isset($item->updated_by) && isset($userColorMap[$item->updated_by])
+                        ? $userColorMap[$item->updated_by]
+                        : 'bg-gray-100 text-red-500'; // belum pernah diupdate
 
                     // LOGIKA WARNA AREA
                     $areaBgClass = 'bg-gray-100';
@@ -52,8 +58,11 @@
                     </td>
 
                     {{-- ID REQUEST --}}
-                    <td class="py-3 px-6 font-bold {{ $idColorClass }}">
-                        {{ $item->request_id }}
+                    {{-- ID REQUEST --}}
+                    <td class="py-3 px-6">
+                        <span class="px-2.5 py-1 rounded font-bold text-xs {{ $idColorClass }}">
+                            {{ $item->request_id }}
+                        </span>
                     </td>
 
                     {{-- NAME SALES (FIXED DIV TAG) --}}

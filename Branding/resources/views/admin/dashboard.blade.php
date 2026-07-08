@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="icon" href="bar2.png" type="image/png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('img/bar2.png') }}">
 
     <style>
         /* Warna kustom berdasarkan gaya Metronic */
@@ -107,7 +107,7 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Tahun</label>
                         <select name="year" class="block w-full bg-gray-50 border border-gray-300 text-gray-700 py-2 px-3 rounded leading-tight focus:outline-none focus:bg-white focus:border-blue-500">
                             <option value="">-- Semua Tahun --</option>
-                            @for ($i = date('Y'); $i >= 2020; $i--)
+                            @for ($i = date('Y'); $i >= 2024; $i--)
                                 <option value="{{ $i }}" {{ ($selectedYear == $i) ? 'selected' : '' }}>{{ $i }}</option>
                             @endfor
                         </select>

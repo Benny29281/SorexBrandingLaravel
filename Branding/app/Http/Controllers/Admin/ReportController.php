@@ -10,40 +10,44 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    // 1. Tampilkan Halaman Laporan
     public function index()
     {
         return view('admin.laporan.index');
     }
 
-    // 2. Proses Download Excel
     public function export(Request $request)
     {
-        // Validasi
         $request->validate([
-            'area'       => 'required',
+            'area'       => 'nullable|array', 
             'start_date' => 'nullable|date',
             'end_date'   => 'nullable|date|after_or_equal:start_date',
-            'columns'    => 'nullable|array' // Wajib array karena checkbox
+            'columns'    => 'nullable|array'
         ]);
 
-        $area  = $request->area;
+        $area = $request->input('area', []); // Pastikan defaultnya array kosong jika null
+        
+        $areaLabel = 'SEMUA';
+        if (!empty($area)) {
+            $areaLabel = count($area) > 2 
+                ? implode('-', array_slice($area, 0, 2)) . '-dst' 
+                : implode('-', $area);
+        }
+
         $start = $request->start_date;
         $end   = $request->end_date;
         
-        // Ambil kolom yang dipilih user
+        // --- REVISI DI SINI ---
+        // Pastikan 'submission_date' dan 'request_id' selalu ikut jika tidak dipilih user,
+        // agar proses sorting di Export class tetap berjalan mulus.
         $columns = $request->input('columns');
-
-        // Jika user lupa centang semua, kita kasih default minimal agar tidak error
         if (empty($columns)) {
-            $columns = ['request_id', 'nama_toko', 'status_pekerjaan']; 
+            $columns = ['request_id', 'submission_date', 'nama_toko', 'area_sales']; 
         }
+        // -----------------------
 
-        // Nama File Cantik
         $timestamp = Carbon::now()->format('d-m-Y_H-i');
-        $fileName  = "Laporan_Branding_{$area}_{$timestamp}.xlsx";
+        $fileName  = "Laporan_Branding_{$areaLabel}_{$timestamp}.xlsx";
 
-        // Kirim $columns ke Export Class (Parameter ke-4)
         return Excel::download(new BrandingStatusExport($area, $start, $end, $columns), $fileName);
     }
 }

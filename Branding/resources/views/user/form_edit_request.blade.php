@@ -10,6 +10,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ asset('img/bar2.png') }}">
     
     <style>
         body { font-family: 'Poppins', sans-serif; }
@@ -98,9 +99,9 @@
                 </h1>
                 <p class="text-gray-500 text-sm mt-1">Silakan ubah data yang diperlukan.</p>
             </div>
-            <a href="{{ route('user.request.revisi') }}" class="text-gray-500 hover:text-red-600 font-bold bg-white px-4 py-2 rounded-lg border border-gray-300 shadow-sm transition">
+            {{-- <a href="{{ route('user.request.revisi') }}" class="text-gray-500 hover:text-red-600 font-bold bg-white px-4 py-2 rounded-lg border border-gray-300 shadow-sm transition">
                 <i class="fas fa-times mr-2"></i> Batal
-            </a>
+            </a> --}}
         </div>
 
         {{-- FORM UPDATE --}}

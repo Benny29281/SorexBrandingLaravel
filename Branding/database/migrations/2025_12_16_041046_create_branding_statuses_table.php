@@ -37,7 +37,7 @@ return new class extends Migration
             
             $table->string('nomor_resi')->nullable();
             $table->datetime('konfirmasi_penerimaan')->nullable(); // Disamakan dengan controller
-
+            $table->string('updated_by_role')->nullable()->after('status_pekerjaan');
             $table->timestamps();
         });
     }

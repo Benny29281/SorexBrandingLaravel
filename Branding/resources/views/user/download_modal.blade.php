@@ -38,13 +38,13 @@
                                 <option value="ALL">Semua Area Saya</option>
 
                                 {{-- Pilihan Dinamis Berdasarkan Regional User --}}
-                                @if(Auth::user()->regional == 'reg1' || Auth::user()->regional == 'Regional 1')
-                                    <option value="JT">(JT)</option>
-                                    <option value="DK">(DK)</option>
-                                    <option value="LP">(LP)</option>
+                                @if(strtoupper(Auth::user()->regional) == 'reg1' || strtoupper(Auth::user()->regional) == 'regional 1')
+                                    <option value="JT">JT</option>
+                                    <option value="DK">DK</option>
+                                    <option value="LP">LP</option>
                                 @else
-                                    <option value="JB">(JB)</option>
-                                    <option value="JR">(JR)</option>
+                                    <option value="JB">JB</option>
+                                    <option value="JR">JR</option>
                                 @endif
 
                             </select>

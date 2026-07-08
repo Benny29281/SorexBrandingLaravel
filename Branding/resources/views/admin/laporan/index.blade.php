@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="icon" type="image/x-icon" href="{{ asset('img/bar2.png') }}">
     
     <style>
         .bg-sidebar { background-color: #3d3d3d; }
@@ -50,24 +51,68 @@
                         
                         {{-- 1. FILTER AREA & TANGGAL --}}
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-b border-gray-200 pb-8">
-                            <div>
-                                <label class="block text-gray-700 font-bold mb-2 text-sm">Regional / Area</label>
-                                <div class="relative">
-                                    <select name="area" class="w-full border-gray-300 border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white cursor-pointer">
-                                        <option value="all">SEMUA DATA</option>
-                                        <optgroup label="Regional 1">
-                                            <option value="JT">JT</option>
-                                            <option value="DK">DK</option>
-                                            <option value="LP">LP</option>
-                                        </optgroup>
-                                        <optgroup label="Regional 2">
-                                            <option value="JB">JB</option>
-                                            <option value="JR">JR</option>
-                                        </optgroup>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><i class="fas fa-chevron-down text-xs"></i></div>
+                            <div x-data="{ open: false, selected: [] }">
+                            <label class="block text-gray-700 font-bold mb-2 text-sm">Regional / Area</label>
+                            <div class="relative">
+                                <button type="button" 
+                                    @click="open = !open" 
+                                    class="w-full border-gray-300 border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white flex justify-between items-center shadow-sm"
+                                    :class="open ? 'ring-2 ring-green-500' : ''">
+                                    
+                                    <span class="text-gray-700 truncate">
+                                        <template x-if="selected.length === 0">
+                                            <span>SEMUA DATA</span>
+                                        </template>
+                                        <template x-if="selected.length > 0">
+                                            <span x-text="selected.join(', ')"></span>
+                                        </template>
+                                    </span>
+                                    <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                                </button>
+
+                                <div x-show="open" 
+                                    @click.away="open = false"
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="opacity-0 transform scale-95"
+                                    x-transition:enter-end="opacity-100 transform scale-100"
+                                    class="absolute left-0 right-0 z-[9999] mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-3"
+                                    style="display: none;">
+                                    
+                                    <div class="max-h-60 overflow-y-auto">
+                                        <div class="mb-3">
+                                            <p class="px-2 pb-1 text-[10px] font-bold text-gray-400 uppercase border-b mb-2 tracking-widest">Regional 1</p>
+                                            <div class="grid grid-cols-1 gap-1">
+                                                <template x-for="item in ['JT', 'DK', 'LP']">
+                                                    <label class="flex items-center px-3 py-2 hover:bg-green-50 rounded-md cursor-pointer transition-colors group">
+                                                        <input type="checkbox" name="area[]" :value="item" x-model="selected"
+                                                            class="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4">
+                                                        <span class="ml-3 text-sm text-gray-700 group-hover:text-green-700 font-medium" x-text="item"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-1">
+                                            <p class="px-2 pb-1 text-[10px] font-bold text-gray-400 uppercase border-b mb-2 tracking-widest">Regional 2</p>
+                                            <div class="grid grid-cols-1 gap-1">
+                                                <template x-for="item in ['JB', 'JR']">
+                                                    <label class="flex items-center px-3 py-2 hover:bg-green-50 rounded-md cursor-pointer transition-colors group">
+                                                        <input type="checkbox" name="area[]" :value="item" x-model="selected"
+                                                            class="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4">
+                                                        <span class="ml-3 text-sm text-gray-700 group-hover:text-green-700 font-medium" x-text="item"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
+                                        <span class="text-[10px] text-gray-400" x-text="selected.length + ' dipilih'"></span>
+                                        <button type="button" @click="selected = []" class="text-[11px] text-red-500 hover:text-red-700 font-bold">Hapus Semua</button>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
                             <div>
                                 <label class="block text-gray-700 font-bold mb-2 text-sm">Dari Tanggal</label>
                                 <input type="date" name="start_date" class="w-full border-gray-300 border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer">
@@ -117,6 +162,7 @@
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="submission_date" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">TGL REQUEST</span></label>
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="nama_sales" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">SALES</span></label>
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="nama_toko" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">TOKO</span></label>
+                                                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="lokasi" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">Lokasi</span></label>
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="area_sales" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">AREA</span></label>
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="brand" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm font-bold">TIPE (B/P)</span></label>
                                                 <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="columns[]" value="via" checked x-bind:checked="selectAll" class="rounded text-gray-800"><span class="text-sm">VIA</span></label>

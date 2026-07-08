@@ -20,20 +20,17 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
     protected $endDate;
     protected $columns;
 
-    // MAPPING HEADER SESUAI GAMBAR ANDA (JANGAN DIUBAH URUTAN DI SINI TIDAK MASALAH, KARENA MENGIKUTI INPUT CHECKBOX)
     protected $headerMap = [
-        // --- HEADER 1 (HITAM) ---
         'request_id'            => 'REQUEST ID',
         'submission_date'       => 'TGL REQUEST',
         'nama_sales'            => 'SALES',
         'nama_toko'             => 'TOKO',
+        'lokasi'                => 'LOKASI',
         'area_sales'            => 'AREA',
-        'brand'                 => 'TIPE (B/P)', // Saya mapping Brand ke TIPE (B/P) sesuai request
+        'brand'                 => 'TIPE (B/P)',
         'via'                   => 'VIA',
         'jenis_tools_branding'  => 'PERMINTAAN',
         'qty_tools'             => 'QTY',
-
-        // --- HEADER 2 (BIRU / COKLAT) ---
         'pembuatan_design'      => 'PEMBUATAN DESIGN',
         'approve_leader'        => 'APPROVE LEADER',
         'approve_toko'          => 'APPROVE TOKO',
@@ -41,8 +38,6 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
         'tanggal_masuk_vendor'  => 'MASUK VENDOR',
         'nama_vendor'           => 'NAMA VENDOR',
         'sj_di_terima_tasya'    => 'SJ DI TERIMA TASYA',
-
-        // --- HEADER 3 (HIJAU / UNGU) ---
         'po_selesai_gudang_fr'  => 'PO SELESAI & KE GUDANG FR',
         'packing_barang_fr'     => 'PACKING DI GUDANG FR',
         'kirim_ke_dadap'        => 'KIRIM KE DADAP',
@@ -54,7 +49,8 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
 
     public function __construct($area, $startDate, $endDate, $columns)
     {
-        $this->area = $area;
+        // Pastikan $area selalu array untuk memudahkan pencarian
+        $this->area = is_array($area) ? $area : ($area == 'all' ? [] : [$area]);
         $this->startDate = $startDate; 
         $this->endDate = $endDate;    
         $this->columns = $columns;
@@ -65,70 +61,53 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
         $ids_reg1 = [];
         $ids_reg2 = [];
 
-        // 1. REGIONAL 1
-        if ($this->area == 'all' || in_array($this->area, ['JT', 'DK', 'LP'])) {
+        // Identifikasi kode area per regional
+        $reg1_codes = ['JT', 'DK', 'LP'];
+        $reg2_codes = ['JB', 'JR'];
+
+        // Cek apakah user memilih area dari Regional 1 atau pilih semua
+        $selected_reg1 = empty($this->area) ? $reg1_codes : array_intersect($this->area, $reg1_codes);
+        if (!empty($selected_reg1)) {
             $q1 = BrandingRequest::query();
-            if ($this->area != 'all') {
-                $q1->where(function($q) {
-                    $q->where('area_sales', $this->area)
-                      ->orWhere('nama_sales', 'LIKE', $this->area.'%')
-                      ->orWhere('request_id', 'LIKE', $this->area.'%');
-                });
-            }
+            $q1->whereIn('area_sales', $selected_reg1);
+            
             if ($this->startDate && $this->endDate) {
                 $q1->whereBetween('submission_date', [$this->startDate, $this->endDate]);
             }
             $ids_reg1 = $q1->pluck('request_id')->toArray();
         }
 
-        // 2. REGIONAL 2
-        if ($this->area == 'all' || in_array($this->area, ['JB', 'JR'])) {
+        // Cek apakah user memilih area dari Regional 2 (Termasuk JB)
+        $selected_reg2 = empty($this->area) ? $reg2_codes : array_intersect($this->area, $reg2_codes);
+        if (!empty($selected_reg2)) {
             $q2 = BrandingRequest2::query();
-            if ($this->area != 'all') {
-                $q2->where(function($q) {
-                    $q->where('area_sales', $this->area)
-                      ->orWhere('nama_sales', 'LIKE', $this->area.'%')
-                      ->orWhere('request_id', 'LIKE', $this->area.'%');
-                });
-            }
+            $q2->whereIn('area_sales', $selected_reg2);
+            
             if ($this->startDate && $this->endDate) {
                 $q2->whereBetween('submission_date', [$this->startDate, $this->endDate]);
             }
             $ids_reg2 = $q2->pluck('request_id')->toArray();
         }
 
-        // 3. GABUNGKAN
-        $finalIds = array_merge($ids_reg1, $ids_reg2);
+        $finalIds = array_unique(array_merge($ids_reg1, $ids_reg2));
 
         if (empty($finalIds)) {
             return collect([]);
         }
 
-        // Ambil Data Status
+        // Ambil Data Status dengan Eager Loading agar tidak berat (N+1 Query)
         $data = BrandingStatus::whereIn('request_id', $finalIds)->latest()->get();
 
-        // Filter & Attach Parent
-        $filteredData = $data->filter(function ($item) {
-            if (str_contains($item->request_id, 'BS') || str_contains($item->request_id, 'JT') || str_contains($item->request_id, 'DK') || str_contains($item->request_id, 'LP')) {
-                $item->parent_data = BrandingRequest::where('request_id', $item->request_id)->first();
-            } else {
+        return $data->map(function ($item) {
+            // Logika penentuan parent berdasarkan prefix ID
+            // JB sekarang masuk ke BrandingRequest2 sesuai permintaan sebelumnya
+            if (str_starts_with($item->request_id, 'JB') || str_starts_with($item->request_id, 'JR')) {
                 $item->parent_data = BrandingRequest2::where('request_id', $item->request_id)->first();
+            } else {
+                $item->parent_data = BrandingRequest::where('request_id', $item->request_id)->first();
             }
-
-            if (!$item->parent_data) return false;
-
-            if ($this->startDate && $this->endDate) {
-                try {
-                    $dateDb = Carbon::parse($item->parent_data->submission_date);
-                    $start = Carbon::parse($this->startDate)->startOfDay();
-                    $end = Carbon::parse($this->endDate)->endOfDay();
-                    return $dateDb->between($start, $end);
-                } catch (\Exception $e) { return true; }
-            }
-            return true;
-        });
-
-        return $filteredData;
+            return $item;
+        })->filter(fn($item) => $item->parent_data !== null);
     }
 
     public function map($item): array
@@ -139,27 +118,17 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
         foreach ($this->columns as $col) {
             $val = '-';
 
-            // Cek Parent
-            if (in_array($col, ['submission_date', 'nama_toko', 'area_sales', 'nama_sales', 'brand', 'jenis_tools_branding', 'qty_tools', 'via'])) {
+            // List kolom yang ada di tabel parent (BrandingRequest/2)
+            $parentCols = ['submission_date', 'nama_toko', 'area_sales', 'nama_sales', 'brand', 'jenis_tools_branding', 'qty_tools', 'via', 'lokasi'];
+            
+            if (in_array($col, $parentCols)) {
                 $val = $p ? $p->{$col} : '-';
-            }
-            // Cek Child
-            else {
+            } else {
                 $val = $item->{$col};
             }
 
-            // Format Tanggal
-            if ($val && $val != '-' && (
-                str_contains($col, 'date') || 
-                str_contains($col, 'tanggal') || 
-                str_contains($col, 'pembuatan') || 
-                str_contains($col, 'approve') || 
-                str_contains($col, 'konfirmasi') || 
-                str_contains($col, 'sj_') || 
-                str_contains($col, 'po_') || 
-                str_contains($col, 'kirim_') || 
-                str_contains($col, 'terima_')
-            )) {
+            // Format Tanggal Otomatis
+            if ($val && $val != '-' && $this->isDateColumn($col)) {
                  try { $val = Carbon::parse($val)->format('d-m-Y'); } catch (\Exception $e) { }
             }
 
@@ -167,6 +136,15 @@ class BrandingStatusExport implements FromCollection, WithHeadings, WithMapping,
         }
 
         return $row;
+    }
+
+    // Helper untuk cek apakah kolom tersebut berisi tanggal
+    private function isDateColumn($col) {
+        $keywords = ['date', 'tanggal', 'pembuatan', 'approve', 'konfirmasi', 'sj_', 'po_', 'kirim_', 'terima_'];
+        foreach ($keywords as $key) {
+            if (str_contains($col, $key)) return true;
+        }
+        return false;
     }
 
     public function headings(): array

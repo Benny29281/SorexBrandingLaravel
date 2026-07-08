@@ -13,6 +13,11 @@ class BrandingRequest2 extends Model
     protected $table = 'branding_requests2'; 
 
     protected $guarded = [];
+
+    // Tambahkan 3 baris ini di dalam class BrandingRequest2
+    protected $primaryKey = 'request_id'; // Nama kolom kunci di database Anda
+    public $incrementing = false;        // Karena kodenya manual (RB1847), bukan angka otomatis
+    protected $keyType = 'string';       // Karena kodenya mengandung huruf
     
     // Atau jika pakai fillable, pastikan lengkap:
     protected $fillable = [
@@ -33,6 +38,7 @@ class BrandingRequest2 extends Model
         'keterangan_tambahan',
         'photo_area_pemasangan',
         'photo_sugest_design',
-        'status'
+        'status',
+        'updated_by',
     ];
 }

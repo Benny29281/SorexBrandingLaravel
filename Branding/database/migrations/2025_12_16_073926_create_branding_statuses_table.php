@@ -26,7 +26,7 @@ return new class extends Migration
         $table->datetime('kirim_ke_ekspedisi')->nullable();
         $table->string('nomor_resi')->nullable();
         $table->datetime('konfirmasi_penerimaan')->nullable();
-        $table->string('status_pekerjaan')->default('PROSES');
+        $table->string('updated_by_role')->nullable()->after('status_pekerjaan');
         $table->timestamps();
     });
 }

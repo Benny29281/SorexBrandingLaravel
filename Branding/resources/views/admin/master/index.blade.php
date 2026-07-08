@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-
+<link rel="icon" type="image/x-icon" href="{{ asset('img/bar2.png') }}">
 @section('content')
 <div class="container mx-auto px-4 py-4 h-[calc(100vh-80px)] flex flex-col">
     

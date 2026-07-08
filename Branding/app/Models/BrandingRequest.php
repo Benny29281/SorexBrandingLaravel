@@ -30,5 +30,7 @@ class BrandingRequest extends Model
         'keterangan_tambahan',
         'photo_area_pemasangan',
         'photo_sugest_design',
+        'status',
+        'updated_by',
     ];
 }

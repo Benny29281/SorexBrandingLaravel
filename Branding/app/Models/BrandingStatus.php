@@ -11,23 +11,23 @@ class BrandingStatus extends Model
 
     protected $guarded = [];
 
-    public function getParentDataAttribute()
-    {
-        // 1. Ambil 2 Huruf pertama dari ID (Misal: BS atau RB)
-        $prefix = strtoupper(substr($this->request_id, 0, 2));
+    // BrandingStatus.php
 
-        // 2. Jika BS -> Cari di Tabel Regional 1 (BrandingRequest)
-        if ($prefix === 'BS') {
-            return \App\Models\BrandingRequest::where('request_id', $this->request_id)->first();
-        } 
-        
-        // 3. Jika RB -> Cari di Tabel Regional 2 (BrandingRequest2)
-        elseif ($prefix === 'RB') {
-            return \App\Models\BrandingRequest2::where('request_id', $this->request_id)->first();
+        public function getParentDataAttribute()
+        {
+            $prefix = strtoupper(substr($this->request_id, 0, 2));
+
+            if ($prefix === 'BS') {
+                // Gunakan getRelationValue agar mengambil dari eager load 'parent_data_reg1'
+                return $this->parent_data_reg1; 
+            } 
+            
+            if ($prefix === 'RB') {
+                return $this->parent_data_reg2;
+            }
+
+            return null;
         }
-
-        return null;
-    }
 
         public function parent_data_reg1()
         {

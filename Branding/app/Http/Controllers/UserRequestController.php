@@ -58,9 +58,9 @@ class UserRequestController extends Controller
             
             // Validasi Foto
             'foto_area'        => 'required|array|max:5',
-            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:5120',
+            'foto_area.*'      => 'image|mimes:jpeg,png,jpg|max:7120',
             'foto_sugest'      => 'nullable|array|max:5',
-            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:5120',
+            'foto_sugest.*'    => 'image|mimes:jpeg,png,jpg|max:7120',
         ]);
 
         // B. PROSES UPLOAD FOTO (LOOPING)

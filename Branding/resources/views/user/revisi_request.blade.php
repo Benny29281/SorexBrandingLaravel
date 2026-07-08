@@ -19,6 +19,7 @@
 
     {{-- SweetAlert2 --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="icon" type="image/x-icon" href="{{ asset('img/bar2.png') }}">
     
     <style>
         body { font-family: 'Poppins', sans-serif; }
@@ -180,6 +181,7 @@
                             
                             {{-- INPUT ID DENGAN AUTO UPPERCASE --}}
                             <input type="text" 
+                                    id="request_id"
                                    name="request_id" 
                                    required 
                                    oninput="this.value = this.value.toUpperCase()"
@@ -243,6 +245,14 @@
     {{-- SweetAlert Logic --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            const form = document.querySelector('form'); // Sesuaikan selector form
+            const input = document.getElementById('request_id');
+            
+            form.addEventListener('submit', function(e) {
+                input.value = input.value.toUpperCase();
+            });
+            
             // Pop-up jika ada error (Data sudah pernah direvisi / tidak ditemukan)
             @if ($errors->any())
                 Swal.fire({
